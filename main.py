@@ -1,46 +1,51 @@
-import cv2
-import mediapipe as mp
-import pyautogui
+import cv2  # Import the OpenCV library for image processing.
+import mediapipe as mp  # Import the MediaPipe library for face detection and landmark estimation.
+import pyautogui  # Import the PyAutoGUI library for controlling the mouse cursor.
+import face_utils as fu
+import mouse_utils as mu
+import eye_utils as eu
 
-screen_w, screen_h = pyautogui.size()
+
+def process_video_stream(cam):
+    """
+    Process the video stream, detect facial landmarks, and control the mouse cursor accordingly.
+
+    Parameters:
+    - cam (cv2.VideoCapture): The OpenCV VideoCapture object representing the camera.
+
+    Returns:
+    - None
+    """
+    while True:
+        # Read a frame from the camera.
+        ret, frame = cam.read()
+        # If there's an issue reading the frame, break out of the loop.
+        if not ret:
+            break
+        # Flip the frame horizontally for a mirrored view.
+        frame = cv2.flip(frame, 1)
+        # Detect landmarks on the frame.
+        landmark_points = fu.detect_face_landmarks(frame)
+        # If any landmarks are detected:
+        if landmark_points:
+            # Get the landmarks of the first face detected.
+            landmarks = landmark_points[0].landmark
+            # Call the function to find iris landmarks and move cursor.
+            mu.iris_mouse(landmarks, frame)
+            # Call the function to find blink landmarks and perform click action.
+            eu.blink(landmarks, frame)
+        # Display the processed frame with annotations.
+        cv2.imshow('Eye Controlled Mouse', frame)
+        # Check for the 'q' key press to exit the loop.
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # Release the camera and close all OpenCV windows.
+    cam.release()
+    cv2.destroyAllWindows()
+
+
+# Initialize the camera for capturing video frames.
 cam = cv2.VideoCapture(0)
-face_mesh = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
-
-
-def find_landmarks_and_click(landmarks, frame_w, frame_h):
-    for id, landmark in enumerate(landmarks[474:478]):
-        x = int(landmark.x * frame_w)
-        y = int(landmark.y * frame_h)
-        cv2.circle(frame, (x, y), 3, (0, 255, 0))
-        if id == 1:
-            screen_x = int(screen_w * landmark.x)
-            screen_y = int(screen_h * landmark.y)
-            pyautogui.moveTo(screen_x, screen_y)
-    left = [landmarks[145], landmarks[159]]
-    for landmark in left:
-        x = int(landmark.x * frame_w)
-        y = int(landmark.y * frame_h)
-        cv2.circle(frame, (x, y), 3, (0, 255, 255))
-    if (left[0].y - left[1].y) < 0.004:
-        pyautogui.click()
-        pyautogui.sleep(1)
-
-
-while True:
-    ret, frame = cam.read()
-    if not ret:
-        break
-    frame = cv2.flip(frame, 1)
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    output = face_mesh.process(rgb_frame)
-    landmark_points = output.multi_face_landmarks
-    if landmark_points:
-        landmarks = landmark_points[0].landmark
-        frame_h, frame_w, _ = frame.shape
-        find_landmarks_and_click(landmarks, frame_w, frame_h)
-    cv2.imshow('Eye Controlled Mouse', frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cam.release()
-cv2.destroyAllWindows()
+# Call the function to process the video stream.
+process_video_stream(cam)
