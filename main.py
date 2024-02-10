@@ -6,6 +6,7 @@ screen_w, screen_h = pyautogui.size()
 cam = cv2.VideoCapture(0)
 face_mesh = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
 
+
 def find_landmarks_and_click(landmarks, frame_w, frame_h):
     for id, landmark in enumerate(landmarks[474:478]):
         x = int(landmark.x * frame_w)
@@ -23,6 +24,7 @@ def find_landmarks_and_click(landmarks, frame_w, frame_h):
     if (left[0].y - left[1].y) < 0.004:
         pyautogui.click()
         pyautogui.sleep(1)
+
 
 while True:
     ret, frame = cam.read()
