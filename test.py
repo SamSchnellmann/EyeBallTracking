@@ -7,7 +7,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
 
-# Function 1: Draw a circle and label at whatever landmark you want.
+# Draw a circle and label at whatever landmark you want.
 def draw_first_landmark(img, landmark, width, height):
     x = int(landmark.x * width)
     y = int(landmark.y * height)
@@ -15,7 +15,7 @@ def draw_first_landmark(img, landmark, width, height):
     cv2.putText(img, '0', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 
 
-# Function 2: Draw circles and labels for all landmarks
+# Draw circles and labels for all landmarks
 def draw_all_landmarks(img, face_landmarks, width, height):
     for i, landmark in enumerate(face_landmarks.landmark):
         x = int(landmark.x * width)
@@ -25,7 +25,7 @@ def draw_all_landmarks(img, face_landmarks, width, height):
         # cv2.putText(img, str(i), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
 
-# Function 3: Draw irises
+# Draw irises
 def draw_irises(img, face_landmarks):
     mp_drawing.draw_landmarks(
         image=img,
@@ -36,7 +36,7 @@ def draw_irises(img, face_landmarks):
     )
 
 
-# Function 4: Draw face contours
+# Draw face contours
 def draw_face_contours(img, face_landmarks):
     mp_drawing.draw_landmarks(
         image=img,
@@ -47,7 +47,7 @@ def draw_face_contours(img, face_landmarks):
     )
 
 
-# Function 5: Draw tesselation (grid pattern) on face
+# Draw tesselation (grid pattern) on face
 def draw_tesselation(img, face_landmarks):
     mp_drawing.draw_landmarks(
         image=img,
