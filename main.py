@@ -1,6 +1,4 @@
 import cv2  # Import the OpenCV library for image processing.
-import mediapipe as mp  # Import the MediaPipe library for face detection and landmark estimation.
-import pyautogui  # Import the PyAutoGUI library for controlling the mouse cursor.
 import face_utils as fu
 import mouse_utils as mu
 import eye_utils as eu

@@ -12,6 +12,7 @@ def get_face_marks():
     Returns:
     - landmark_points (list): A list containing the detected landmark points if any faces are detected
     """
+    # True is for added iris landmarks
     return mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
 
 

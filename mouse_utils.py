@@ -35,6 +35,8 @@ def iris_mouse(landmarks, frame):
     """
     iris_landmarks = eu.find_iris_landmarks(landmarks)
     for id, landmark in enumerate(iris_landmarks):
+
+        #Draws the frame around the right eye
         fu.draw_face_landmark(frame, landmark, (0, 255, 0))
         if id == 1:
             move_cursor_to_landmark(landmark)

@@ -15,6 +15,9 @@ def blink(landmarks, frame):
     """
     if len(landmarks) >= 160:
         left = [landmarks[145], landmarks[159]]
+        right = [landmarks[33], landmarks[133]]
+        for landmark in right:
+            fu.draw_face_landmark(frame, landmark, (0, 0, 255))
         for landmark in left:
             fu.draw_face_landmark(frame, landmark, (0, 255, 255))
         if (left[0].y - left[1].y) < 0.01:
