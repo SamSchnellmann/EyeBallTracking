@@ -1,0 +1,32 @@
+changelog
+
+==============================================================================
+first attempt-
+=-= installed opencv-distrib v4.6.0.66.
+=-= installed pyautogui 0.9.54.
+=-= mediapipe install failed on ver 0.8.10.1 and 0.10.9.
+=-= error caused due to python version being 3.12, attempting switch to 3.11.
+=-= installed py 3.11.7, cant change in current project so im restarting.
+------------------------------------------------------------------------------
+second attempt-
+=-= created pythonProject3.11. mediapipe version 0.10.9 installation was successful.
+=-= I am going to attempt to install the most recent versions of all packages.
+=-= installed opencv-contrib-python 4.9.0.80, after uninstalling previous vers.
+=-= installed pyautogui 0.9.54.
+=-= prototype completed.
+------------------------------------------------------------------------------
+
+===---===---===---===---===---===---===---===---===---===---===---===---===---
+USAGE:
+relative to the heads position in the webcam frame, the mouse will move where the user moves.
+if you want to click, blink with your left eye.
+===---===---===---===---===---===---===---===---===---===---===---===---===---
+
+NOTES:
+=-= need to make changes; some big, some small. =-=
+-i can break the while function into separate functions and files for ease of access and readability.
+-using only the head for direction is not the intended outcome, so I will attempt to track either one or both eyes.
+-adding more gestures for the eyes and head is ideal as well, but should be put off for later.
+-a GUI would be nice once we have the need for it, for accessibility, customization, and more.
+-I have not yet tested the event in which multiple faces are present.
+
