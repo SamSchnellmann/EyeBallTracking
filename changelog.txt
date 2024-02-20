@@ -15,7 +15,7 @@ second attempt-
 =-= installed pyautogui 0.9.54.
 =-= prototype completed.
 ------------------------------------------------------------------------------
-
+==============================================================================
 ===---===---===---===---===---===---===---===---===---===---===---===---===---
 USAGE:
 relative to the heads position in the webcam frame, the mouse will move where the user moves.
