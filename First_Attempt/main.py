@@ -1,7 +1,6 @@
 import cv2  # Import the OpenCV library for image processing.
-import face_utils as fu
 import mouse_utils as mu
-import eye_utils as eu
+from First_Attempt import eye_utils as eu, face_utils as fu
 
 
 def process_video_stream(cam):

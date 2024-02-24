@@ -1,7 +1,6 @@
 import pyautogui  # Import the PyAutoGUI library for controlling the mouse cursor.
 import screen_utils as su
-import face_utils as fu
-import eye_utils as eu
+from First_Attempt import eye_utils as eu, face_utils as fu
 
 # Get the screen width and height using PyAutoGUI.
 screen_w, screen_h = su.screen_size()
