@@ -8,10 +8,6 @@ import mediapipe as mp
 import math
 import numpy as np
 import pyautogui
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-import Dataset
 
 # Initialize MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
@@ -146,8 +142,8 @@ def track_and_map_gaze(calibration_data, screen_width, screen_height):
 
         if results.multi_face_landmarks:
             for face_landmarks in results.multi_face_landmarks:
-                eye_corner_left = face_landmarks.landmark[133]  # Example for one eye
-                eye_corner_right = face_landmarks.landmark[33]
+                eye_corner_left = face_landmarks.landmark[133]  # Left eye
+                eye_corner_right = face_landmarks.landmark[33]  # Right eye
                 eye_center = calculate_eye_center(eye_corner_left, eye_corner_right, screen_width, screen_height)
 
                 iris_center = np.array([face_landmarks.landmark[473].x * screen_width,
@@ -155,54 +151,32 @@ def track_and_map_gaze(calibration_data, screen_width, screen_height):
 
                 current_gaze_vector = calculate_gaze_vector(eye_center, iris_center)
                 screen_coordinates = map_gaze_to_screen_coordinates(calibration_data, current_gaze_vector)
-                print(f"Current gaze is mapped to screen coordinates: {screen_coordinates}")
 
-                # Optionally visualize the gaze point on the screen
                 if screen_coordinates:
-                    cv2.circle(image, screen_coordinates, 10, (255, 0, 0), -1)
+                    # Convert screen_coordinates to integers, as circle() requires integer coordinates
+                    screen_coordinates = tuple(map(int, screen_coordinates))
+                    # Drawing a black circle on the predicted gaze point
+                    cv2.circle(image, screen_coordinates, 10, (0, 0, 0), -1)  # Changed color to black
                     cv2.imshow('Gaze Tracking', image)
 
-                if cv2.waitKey(5) & 0xFF == 27:
+                if cv2.waitKey(5) & 0xFF == 27:  # Break the loop with the 'ESC' key
                     break
 
     cap.release()
     cv2.destroyAllWindows()
 
 
-def create_cnn_model():
-    model = Sequential([
-        Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
-        MaxPooling2D((2, 2)),
-        Conv2D(64, (3, 3), activation='relu'),
-        MaxPooling2D((2, 2)),
-        Flatten(),
-        Dense(128, activation='relu'),
-        Dense(3, activation='linear')  # Output layer for P, V, H
-    ])
-    model.compile(optimizer='adam', loss='mean_squared_error')
-    return model
-
-
 # Main function to execute the calibration and start gaze tracking
 def main():
-    # screen_width, screen_height = pyautogui.size()
-    # calibration_points = get_calibration_points(screen_width, screen_height)
-    #
-    # # Execute screen calibration
-    # calibration_data = run_screen_calibration(calibration_points, screen_width, screen_height)
-    # print("Calibration Data:", calibration_data)
-    #
-    # # After calibration, start tracking the gaze and map it to screen coordinates
-    # track_and_map_gaze(calibration_data, screen_width, screen_height)
-    dataset_path = 'columbia_gaze_data_set'
-    images, labels = Dataset.load_dataset(dataset_path)
-    x_train, x_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=42)
+    screen_width, screen_height = pyautogui.size()
+    calibration_points = get_calibration_points(screen_width, screen_height)
 
-    model = create_cnn_model()
-    model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test), verbose=1)
-    test_loss = model.evaluate(x_test, y_test)
-    print(f'Test Loss: {test_loss}')
+    # Execute screen calibration
+    calibration_data = run_screen_calibration(calibration_points, screen_width, screen_height)
+    print("Calibration Data:", calibration_data)
 
+    # After calibration, start tracking the gaze and map it to screen coordinates
+    track_and_map_gaze(calibration_data, screen_width, screen_height)
 
 if __name__ == "__main__":
     main()
