@@ -1,3 +1,7 @@
+#Credit https://github.com/matthullstrung/gaze-estimation
+#I cleaned up the code, and incorporated pyautogui
+
+
 import cv2
 import mediapipe as mp
 import numpy as np
