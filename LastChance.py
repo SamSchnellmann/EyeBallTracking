@@ -1,11 +1,12 @@
-#Credit https://github.com/matthullstrung/gaze-estimation
-#I cleaned up the code, and incorporated pyautogui
+# Credit https://github.com/matthullstrung/gaze-estimation
+# I cleaned up the code, and incorporated pyautogui
 
 
 import cv2
 import mediapipe as mp
 import numpy as np
 import pyautogui
+from collections import deque
 
 ############## PARAMETERS #######################################################
 
@@ -27,7 +28,7 @@ mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
                                   refine_landmarks=True,
                                   max_num_faces=2,
-                                  min_detection_confidence=0.5)
+                                  min_detection_confidence=0.6)
 cap = cv2.VideoCapture(0)
 
 face_3d = np.array([
@@ -54,6 +55,11 @@ reye_3d[:, 2] += 135
 # Gaze scores from the previous frame
 last_lx, last_rx = 0, 0
 last_ly, last_ry = 0, 0
+
+# Initialize deques for smoothing with a fixed window size
+window_size = 5  # Adjustable based on desired smoothing effect
+gaze_points_x = deque(maxlen=window_size)
+gaze_points_y = deque(maxlen=window_size)
 
 
 def prepare_image_for_face_mesh(cap):
@@ -194,18 +200,21 @@ def move_mouse_based_on_gaze(x_direction, y_direction):
 def estimate_gaze_point_on_screen(lx_score, ly_score, rx_score, ry_score):
     screen_width, screen_height = pyautogui.size()
 
-    # Assuming lx_score and rx_score are normalized between 0 and 1
-    print(lx_score, ly_score, rx_score)
-    # Map these scores to screen width
+    # Calculate average scores and map to screen coordinates
     avg_x_score = (lx_score + rx_score) / 2
     gaze_x = int(avg_x_score * screen_width)
-
-    # Assuming ly_score and ry_score are normalized between 0 and 1
-    # Map these scores to screen height
     avg_y_score = (ly_score + ry_score) / 2
     gaze_y = int(avg_y_score * screen_height)
 
-    return gaze_x, gaze_y
+    # Add the current gaze point to the deques
+    gaze_points_x.append(gaze_x)
+    gaze_points_y.append(gaze_y)
+
+    # Calculate the moving average of the gaze points
+    smooth_gaze_x = sum(gaze_points_x) // len(gaze_points_x)
+    smooth_gaze_y = sum(gaze_points_y) // len(gaze_points_y)
+
+    return smooth_gaze_x, smooth_gaze_y
 
 
 def project_and_draw_axis(img, corner, rvec, tvec, cam_matrix, dist_coeffs, draw_headpose, draw_full_axis, draw_gaze,
