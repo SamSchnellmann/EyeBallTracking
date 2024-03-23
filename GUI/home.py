@@ -1,25 +1,41 @@
 from customtkinter import *
-from PIL import Image
+from PIL import Image, ImageTk
+import configparser
 
-# ~~~~~~~~~~~~~~~~~~~ Frame Setup ~~~~~~~~~~~~~~~~~~~ #
+
+# ~~~~~~~~~~~~~~~~~~~ Configuration Handling ~~~~~~~~~~~~~~~~~~~ #
+def save_preferences(theme):
+    config = configparser.ConfigParser()
+    config['Preferences'] = {'Theme': theme}
+    with open('user_preferences.ini', 'w') as configfile:
+        config.write(configfile)
+
+
+def load_preferences():
+    config = configparser.ConfigParser()
+    config.read('user_preferences.ini')
+    theme = config.get('Preferences', 'Theme', fallback='Dark')  # Default to 'Dark' if not found
+    return theme
+
+
+# Initialize current_mode with the user's saved preference
+current_mode = load_preferences()
+
 app = CTk()
 app.geometry("856x645")
 app.resizable(1, 1)
-set_appearance_mode("dark")
-current_mode = "Dark"  # Assuming you start in dark mode
+app.title("Eye Click")
+app.iconbitmap('logo.ico')
+set_appearance_mode(current_mode)  # Apply the loaded theme preference
 
 
 # ~~~~~~~~~~~~~~~~~~~ Frame Setup ~~~~~~~~~~~~~~~~~~~ #
-
-
-# ~~~~~~~~~~~~~~~~~~~ Helper Functions ~~~~~~~~~~~~~~ #
+# Helper Functions
 def show_frame(frame_to_show):
     # Hide all frames
     dashboard_frame.pack_forget()
     instruction_frame.pack_forget()
     settings_frame.pack_forget()
-    # Add more frames if you have them
-
     # Show the requested frame
     frame_to_show.pack(side="left", fill="both", expand=True)
 
@@ -32,42 +48,35 @@ def toggle_appearance_mode():
     else:
         set_appearance_mode("Dark")  # Switch to dark mode
         current_mode = "Dark"
+    save_preferences(current_mode)  # Save the current theme preference
 
 
-# ~~~~~~~~~~~~~~~~~~~ Helper Functions ~~~~~~~~~~~~~~ #
-
-
-# ~~~~~~~~~~~~~~~~~~~ Sidebar Setup ~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~ Sidebar Setup ~~~~~~~~~~~~~~~~~~~ #
 sidebar_frame = CTkFrame(master=app, fg_color="#000017", width=176, height=650, corner_radius=0)
 sidebar_frame.pack_propagate(0)
 sidebar_frame.pack(fill="y", anchor="w", side="left")
 
-# Load Data
-logo_img_data = Image.open("logo.webp")
+# Assuming you have a logo image named 'logo.ico' in your project directory
+logo_img_data = Image.open("logo.ico")
 logo_img = CTkImage(dark_image=logo_img_data, light_image=logo_img_data, size=(100, 110))
 CTkLabel(master=sidebar_frame, text="", image=logo_img).pack(pady=(38, 0), anchor="center")
-# ~~~~~~~~~~~~~~~~~~~ Sidebar Setup ~~~~~~~~~~~~~~~~~ #
-
-
-# ~~~~~~~~~~~~~~~~~~~ Main view ~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~ Main View Setup ~~~~~~~~~~~~~~~~~~~ #
 
 # New frame for the Dashboard
 dashboard_frame = CTkFrame(master=app, width=680, height=650, corner_radius=0)
 
-# New frame for instructions
-instruction_frame = CTkFrame(master=app, width=680, height=650, corner_radius=0)
+# New frame for Instructions
+instruction_frame = CTkScrollableFrame(master=app, width=680, height=650, corner_radius=0)
 
-# New frame for settings
-settings_frame = CTkFrame(master=app, width=680, height=650, corner_radius=0)
+# New frame for Settings
+settings_frame = CTkScrollableFrame(master=app, width=680, height=650, corner_radius=0)
 
+# Initially show the dashboard frame
 dashboard_frame.pack(side="left", fill="both", expand=True)
 instruction_frame.pack_forget()
 settings_frame.pack_forget()
 
-# ~~~~~~~~~~~~~~~~~~~ Main view ~~~~~~~~~~~~~~~~~~~~~ #
-
-
-# ~~~~~~~~~~~~~~~~~~~ Buttons ~~~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~ Sidebar Buttons Setup ~~~~~~~~~~~~~~~~~~~ #
 analytics_img_data = Image.open("analytics_icon.png")
 analytics_img = CTkImage(dark_image=analytics_img_data, light_image=analytics_img_data)
 CTkButton(master=sidebar_frame, image=analytics_img, text="Dashboard", fg_color="transparent", font=("Arial Bold", 14),
@@ -83,13 +92,9 @@ CTkButton(master=sidebar_frame, image=list_img, text="Instructions", fg_color="t
 settings_img_data = Image.open("settings_icon.png")
 settings_img = CTkImage(dark_image=settings_img_data, light_image=settings_img_data)
 CTkButton(master=sidebar_frame, image=settings_img, text="Settings", fg_color="transparent", font=("Arial Bold", 14),
-          hover_color="#4541B6", anchor="w", command=lambda: show_frame(settings_frame)).pack(anchor="center",
-                                                                                              ipady=5,
+          hover_color="#4541B6", anchor="w", command=lambda: show_frame(settings_frame)).pack(anchor="center", ipady=5,
                                                                                               pady=(16, 0))
-# ~~~~~~~~~~~~~~~~~~~ Buttons ~~~~~~~~~~~~~~~~~~~~~~~ #
-
-
-# ~~~~~~~~~~~~~~~~~~~ Dashboard ~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~ Dashboard Content ~~~~~~~~~~~~~~~~~~~ #
 dashboard_title = CTkLabel(master=dashboard_frame, text="Dashboard", font=("Arial Black", 25), text_color="#6862E4")
 dashboard_title.pack(pady=20)
 
@@ -97,31 +102,21 @@ dashboard_info = CTkLabel(master=dashboard_frame, text="Welcome to the Dashboard
                           font=("Arial", 15), text_color="#555")
 dashboard_info.pack(pady=10)
 
-project_description = """This is Eye Click, a simple and intuitive way to help people navigate the web."""
+project_description = "This is Eye Click, a simple and intuitive way to help people navigate the web."
 description_label = CTkLabel(master=dashboard_frame, text=project_description, font=("Arial", 15),
                              wraplength=650, justify="left")
 description_label.pack(pady=10)
 
-# Why We Started
-reason_for_starting = """We started this project with a simple aspiration; we wanted to bring the joy of computers to everyone."""
-reason_label = CTkLabel(master=dashboard_frame, text=reason_for_starting, font=("Arial", 15),
-                        wraplength=650, justify="left")
-reason_label.pack(pady=10)
-
-# Additional Information
-additional_info = """With our introduction out of the way, click the start button below to start the application, or browse our tabs to get started."""
-info_label = CTkLabel(master=dashboard_frame, text=additional_info, font=("Arial", 15),
-                      wraplength=650, justify="left")
-info_label.pack(pady=10)
+project_description2 = "To begin, click start. Or, if you're not quite ready, navigate the sidebar."
+description_label = CTkLabel(master=dashboard_frame, text=project_description2, font=("Arial", 15),
+                             wraplength=650, justify="left")
+description_label.pack(pady=10)
 
 # Start Button at the bottom
 start_button = CTkButton(master=dashboard_frame, text="Start", fg_color="#4541B6", command=lambda: print("Starting..."))
 start_button.pack(pady=(10, 20))
-# ~~~~~~~~~~~~~~~~~~~ Dashboard ~~~~~~~~~~~~~~~~~~~~~ #
 
-
-# ~~~~~~~~~~~~~~~~~~~ Instructions ~~~~~~~~~~~~~~~~~~ #
-# Assuming main_view is for orders, let's add a title and a 'New Order' button
+# ~~~~~~~~~~~~~~~~~~~ Instructions Content ~~~~~~~~~~~~~~~~~~~ #
 instruction_title = CTkLabel(master=instruction_frame, text="Instructions", font=("Arial Black", 25),
                              text_color="#6862E4")
 instruction_title.pack(pady=(29, 0), padx=27, anchor="nw")
@@ -130,15 +125,42 @@ getting_started = CTkLabel(master=instruction_frame, text="Getting Started:", fo
                            text_color="#6862E4")
 getting_started.pack(pady=(29, 0), padx=27, anchor="nw")
 
-first_instruction = """Now we write the instructions. So, probably just put controls here"""
-first_label = CTkLabel(master=instruction_frame, text=project_description, font=("Arial", 15),
-                       wraplength=650, justify="left")
-first_label.pack(pady=10)
+# Text instructions
+instructions_text = [
+    "      1. Click on the start button on the dashboard to start the application.",
+    "      2. Follow through the calibration instructions.",
+    "      3. To scroll {{INSERT INSTRUCTIONS HERE}}",
+    "      4. To click {{INSERT INSTRUCTIONS HERE}}",
+    "      5. {{INCLUDE MORE CONTROLS}}",
+    "      6. Once done, {{INSERT INSTRUCTIONS HERE}}"
+]
 
-# ~~~~~~~~~~~~~~~~~~~ Instructions ~~~~~~~~~~~~~~~~~~ #
+# Image paths corresponding to each step
+instructions_images = [
+    "startInstructions.png",
+    "startInstructions.png",  # Replace with actual image paths
+    "startInstructions.png",  # Replace with actual image paths
+    "startInstructions.png",  # Replace with actual image paths
+    "startInstructions.png",  # Replace with actual image paths
+    "startInstructions.png"  # Replace with actual image paths
+]
 
+# Dynamically create labels and images based on instructions
+for text, img_path in zip(instructions_text, instructions_images):
+    # Create and pack the text label
+    text_label = CTkLabel(master=instruction_frame, text=text, font=("Arial", 18), wraplength=650, justify="left")
+    text_label.pack(pady=(10, 0))
 
-# ~~~~~~~~~~~~~~~~~~~ Settings ~~~~~~~~~~~~~~~~~~~~~~ #
+    # Load the image
+    image = Image.open(img_path)
+    photo = ImageTk.PhotoImage(image)
+
+    # Create and pack the image label
+    image_label = CTkLabel(master=instruction_frame, image=photo, text=" ")
+    image_label.image = photo  # Keep a reference!
+    image_label.pack(pady=(0, 10))
+
+# ~~~~~~~~~~~~~~~~~~~ Settings Content ~~~~~~~~~~~~~~~~~~~ #
 setting_title = CTkLabel(master=settings_frame, text="Settings", font=("Arial Black", 25), text_color="#6862E4")
 setting_title.pack(pady=(20, 20), padx=27, anchor="nw")
 
@@ -154,7 +176,5 @@ CTkLabel(master=settings_left_column, text="Toggle Theme:", font=("Arial", 15), 
     pady=(10, 20))
 CTkButton(master=settings_right_column, text="Toggle", fg_color="#4541B6", command=toggle_appearance_mode).pack(
     pady=(10, 20))
-
-# ~~~~~~~~~~~~~~~~~~~ Settings ~~~~~~~~~~~~~~~~~~~~~~ #
 
 app.mainloop()
