@@ -15,7 +15,7 @@ def create_gaze_estimation_model():
         MaxPooling2D(pool_size=(2, 2)),
         Conv2D(64, kernel_size=(3, 3), activation='relu'),
         MaxPooling2D(pool_size=(2, 2)),
-        Conv2D(128, kernel_size=(3, 3), activation='relu'),  # Additional Conv layer
+        Conv2D(128, kernel_size=(3, 3), activation='relu'),
         MaxPooling2D(pool_size=(2, 2)),
         Flatten(),
         Dense(256, activation='relu'),  # Increased capacity
@@ -75,6 +75,7 @@ def main():
 
     model.save('gaze_estimation_model.keras')
 
+# The most I ever made was one with 11% loss
 
 if __name__ == "__main__":
     main()
