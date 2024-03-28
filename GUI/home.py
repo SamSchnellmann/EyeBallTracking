@@ -40,6 +40,7 @@ def scaled_font_size(base_size, ui_scale):
 title_font_size = scaled_font_size(25, current_ui_scale)
 heading_font_size = scaled_font_size(18, current_ui_scale)
 info_font_size = scaled_font_size(15, current_ui_scale)
+button_font_size = scaled_font_size(20, current_ui_scale)
 
 
 def initialize_app():
@@ -83,6 +84,7 @@ def apply_new_ui_scale(new_scale):
     title_font_size = scaled_font_size(25, new_scale)
     heading_font_size = scaled_font_size(18, new_scale)
     info_font_size = scaled_font_size(15, new_scale)
+    button_font_size = scaled_font_size(14, new_scale)
 
     save_preferences(ui_scale=new_scale)  # Save the new scale setting
 
@@ -135,23 +137,24 @@ def setup_main_view():
 
 # ~~~~~~~~~~~~~~~~~~~ Sidebar Buttons Setup ~~~~~~~~~~~~~~~~~~~ #
 def setup_sidebar_buttons():
+    global button_font_size, sidebar_frame
     analytics_img_data = Image.open("analytics_icon.png")
     analytics_img = CTkImage(dark_image=analytics_img_data, light_image=analytics_img_data)
     CTkButton(master=sidebar_frame, image=analytics_img, text="Dashboard", fg_color="transparent",
-              font=("Arial Bold", 14), hover_color="#4541B6", anchor="w",
-              command=lambda: show_frame(dashboard_frame)).pack(anchor="center", ipady=5, pady=(60, 0))
+              font=("Arial Bold", button_font_size), hover_color="#4541B6", anchor="w",
+              command=lambda: show_frame(dashboard_frame)).pack(side="top", fill="x", anchor="w", pady=(60, 0))
 
     list_img_data = Image.open("list_icon.png")
     list_img = CTkImage(dark_image=list_img_data, light_image=list_img_data)
     CTkButton(master=sidebar_frame, image=list_img, text="Instructions", fg_color="transparent",
-              font=("Arial Bold", 14), hover_color="#4541B6", anchor="w",
-              command=lambda: show_frame(instruction_frame)).pack(anchor="center", ipady=5, pady=(16, 0))
+              font=("Arial Bold", button_font_size), hover_color="#4541B6", anchor="w",
+              command=lambda: show_frame(instruction_frame)).pack(side="top", fill="x", anchor="w", pady=(16, 0))
 
     settings_img_data = Image.open("settings_icon.png")
     settings_img = CTkImage(dark_image=settings_img_data, light_image=settings_img_data)
     CTkButton(master=sidebar_frame, image=settings_img, text="Settings", fg_color="transparent",
-              font=("Arial Bold", 14), hover_color="#4541B6", anchor="w",
-              command=lambda: show_frame(settings_frame)).pack(anchor="center", ipady=5, pady=(16, 0))
+              font=("Arial Bold", button_font_size), hover_color="#4541B6", anchor="w",
+              command=lambda: show_frame(settings_frame)).pack(side="top", fill="x", anchor="w", pady=(16, 0))
 
 
 # ~~~~~~~~~~~~~~~~~~~ Dashboard Content ~~~~~~~~~~~~~~~~~~~ #
@@ -197,7 +200,7 @@ def image_and_labels(labels, images):
         # Load the image
         original_image = Image.open(img_path)
         base_width, base_height = original_image.size
-        new_size = ((base_width * current_ui_scale)/1.5, (base_height * current_ui_scale)/1.5)
+        new_size = ((base_width * current_ui_scale) / 1.5, (base_height * current_ui_scale) / 1.5)
         image = Image.open(img_path)
         photo = CTkImage(image, size=new_size)
 
