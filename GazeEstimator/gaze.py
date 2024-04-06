@@ -1,12 +1,20 @@
 import cv2
 import numpy as np
 from helpers import relative, relativeT
-# import pyautogui
+import helpers
+import pyautogui
 import userface
+# import focallength
+
+
+pyautogui.PAUSE = 0
+
 
 
 flag = None
 on_new_model = False
+
+mouse_flag = None
 
 
 
@@ -85,7 +93,8 @@ def gaze(frame, points):
     # This section regarding the camera will need to be ironed out for more accurate estimation
     # This will be what I (Arron) will work on next
     
-    focal_length = frame.shape[1]
+    focal_length = frame.shape[1] 
+    
     center = (frame.shape[1] / 2, frame.shape[0] / 2)
     camera_matrix = np.array(
         [[focal_length, 0, center[0]],
@@ -113,7 +122,7 @@ def gaze(frame, points):
     # Transformation between static model points and user face
     _, transformation, _ = cv2.estimateAffine3D(image_points1, model_points)  # image to world transformation
 
-    if transformation is not None:  # if estimateAffine3D is scucessful
+    if transformation is not None:  # if estimateAffine3D is successful
         # project pupil image point into 3d world point 
 
         if flag is not None:
@@ -124,9 +133,9 @@ def gaze(frame, points):
             chin_world_cord = transformation @ np.array([[face_chin[0], face_chin[1], 0, 1]]).T
 
             # 3D gaze point estimated using the world Cordinates and Face vectors
-            TL = Top_left_mod + (ftl_world_cord - Top_left_mod) * 10
-            TR = Top_right_mod + (ftr_world_cord - Top_right_mod) * 10
-            C = Chin_mod + (chin_world_cord - Chin_mod) * 10
+            TL = Top_left_mod + (ftl_world_cord - Top_left_mod) * 20
+            TR = Top_right_mod + (ftr_world_cord - Top_right_mod) * 20
+            C = Chin_mod + (chin_world_cord - Chin_mod) * 20
 
             
             # Project the 3d vectors into the 2D plane
@@ -191,6 +200,12 @@ def gaze(frame, points):
             cv2.line(frame, startChin, endChin, (0, 0, 255), 2)
             cv2.line(frame, startAvg, endAvg,(0, 0, 255), 2)
 
+            
+
+            pyautogui.FAILSAFE = False
+            nextpos = helpers.move_mouse_joystick(pyautogui.position(), startAvg, endAvg)
+            pyautogui.moveTo(nextpos[0], nextpos[1])
+
 
 
 
@@ -232,5 +247,6 @@ def gaze(frame, points):
             Rp2 = (int(Rgaze[0]), int(Rgaze[1]))
             cv2.line(frame, p1, p2, (0, 0, 255), 2)
             cv2.line(frame, Rp1, Rp2, (0, 0, 255), 2)
+
     else:
-        print("Fuuuuck")
+        print("Transformation not found")

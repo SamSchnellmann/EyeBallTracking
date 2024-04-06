@@ -28,6 +28,8 @@ def calibrate(frame, points):
         (rightmouth_x, rightmouth_y, -24.1)  # Right mouth corner
     ])
 
+    print(str(lefteye_x) + " : " + str(righteye_x))
+
     TL_x = ((relative(points.landmark[4], frame.shape)[0]) - relative(points.landmark[105], frame.shape)[0])
     TL_y = ((relative(points.landmark[4], frame.shape)[1]) - relative(points.landmark[105], frame.shape)[1])
 

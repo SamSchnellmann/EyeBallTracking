@@ -6,14 +6,17 @@ import userface
 mp_face_mesh = mp.solutions.face_mesh  # initialize the face mesh model
 
 
+
 # camera stream:
 # cap = cv2.VideoCapture(0)  # chose camera index (try 1, 2, 3)
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW) 
+cap = cv2.VideoCapture(1) 
 # cap = cv2.VideoCapture('video2.mp4') 
 
 
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
+
 
 with mp_face_mesh.FaceMesh(
         max_num_faces=1,  # number of faces to track in each frame
@@ -21,10 +24,15 @@ with mp_face_mesh.FaceMesh(
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as face_mesh:
         
+        
+        
 
     while cap.isOpened():
 
         success, image = cap.read()
+
+        image = cv2.flip(image, 1)
+        
         if not success:  # no frame input
             print("Ignoring empty camera frame.")
             continue
@@ -33,6 +41,8 @@ with mp_face_mesh.FaceMesh(
         # To improve performance, optionally mark the image as not writeable to
         # pass by reference.
         image.flags.writeable = False
+
+        
         
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
         results = face_mesh.process(image)
@@ -60,6 +70,15 @@ with mp_face_mesh.FaceMesh(
         # Keybind for setting back to un-calibrated
         if cv2.waitKey(1) & 0xFF == ord('s'):
             gaze.flag = None
+
+        # Keybind for setting back to un-calibrated
+        if cv2.waitKey(1) & 0xFF == ord('m'):
+            if(gaze.mouse_flag == None):
+                gaze.mouse_flag = 1
+            else:
+                gaze.mouse_flag = None
+
+        
 
         # Main gaze function call
         if results.multi_face_landmarks:
