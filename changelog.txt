@@ -15,15 +15,19 @@ second attempt-
 =-= installed pyautogui 0.9.54.
 =-= prototype completed.
 ------------------------------------------------------------------------------
-==============================================================================
 
+------------------------------------------------------------------------------
+update-
+=-= increased sensitivity so that the mouse can reach the entire screen, even multiple monitors.
+=-= added an exit button, "q"
+=-= increased blink sensitivity (left eye) so that it is easier and quicker to use
+------------------------------------------------------------------------------
 
 ===---===---===---===---===---===---===---===---===---===---===---===---===---
 USAGE:
 relative to the heads position in the webcam frame, the mouse will move where the user moves.
 if you want to click, blink with your left eye.
 ===---===---===---===---===---===---===---===---===---===---===---===---===---
-
 
 NOTES:
 =-= need to make changes; some big, some small. =-=
