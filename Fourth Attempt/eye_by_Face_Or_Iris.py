@@ -16,6 +16,8 @@ draw_headpose = False
 x_score_multiplier = 10
 y_score_multiplier = 10
 
+threshold = .3
+
 #################################################################################
 
 mp_face_mesh = mp.solutions.face_mesh
@@ -89,48 +91,48 @@ def convert_landmarks_to_pixel_coordinates(face_landmarks, img_w, img_h):
     return face_2d
 
 
-# def calculate_left_x_gaze_score(face_2d, last_lx, threshold):
-#     if (face_2d[243, 0] - face_2d[130, 0]) != 0:
-#         lx_score = (face_2d[468, 0] - face_2d[130, 0]) / (face_2d[243, 0] - face_2d[130, 0])
-#         if abs(lx_score - last_lx) < threshold:
-#             lx_score = (lx_score + last_lx) / 2
-#         last_lx = lx_score
-#     else:
-#         lx_score = last_lx  # If condition is not met, return the last score
-#     return lx_score, last_lx
-#
-#
-# def calculate_left_y_gaze_score(face_2d, last_ly, threshold):
-#     if (face_2d[23, 1] - face_2d[27, 1]) != 0:
-#         ly_score = (face_2d[468, 1] - face_2d[27, 1]) / (face_2d[23, 1] - face_2d[27, 1])
-#         if abs(ly_score - last_ly) < threshold:
-#             ly_score = (ly_score + last_ly) / 2
-#         last_ly = ly_score
-#     else:
-#         ly_score = last_ly  # If condition is not met, return the last score
-#     return ly_score, last_ly
-#
-#
-# def calculate_right_x_gaze_score(face_2d, last_rx, threshold):
-#     if (face_2d[359, 0] - face_2d[463, 0]) != 0:
-#         rx_score = (face_2d[473, 0] - face_2d[463, 0]) / (face_2d[359, 0] - face_2d[463, 0])
-#         if abs(rx_score - last_rx) < threshold:
-#             rx_score = (rx_score + last_rx) / 2
-#         last_rx = rx_score
-#     else:
-#         rx_score = last_rx  # If condition is not met, return the last score
-#     return rx_score, last_rx
-#
-#
-# def calculate_right_y_gaze_score(face_2d, last_ry, threshold):
-#     if (face_2d[253, 1] - face_2d[257, 1]) != 0:
-#         ry_score = (face_2d[473, 1] - face_2d[257, 1]) / (face_2d[253, 1] - face_2d[257, 1])
-#         if abs(ry_score - last_ry) < threshold:
-#             ry_score = (ry_score + last_ry) / 2
-#         last_ry = ry_score
-#     else:
-#         ry_score = last_ry  # If condition is not met, return the last score
-#     return ry_score, last_ry
+def calculate_left_x_gaze_score(face_2d, last_lx, threshold):
+    if (face_2d[243, 0] - face_2d[130, 0]) != 0:
+        lx_score = (face_2d[468, 0] - face_2d[130, 0]) / (face_2d[243, 0] - face_2d[130, 0])
+        if abs(lx_score - last_lx) < threshold:
+            lx_score = (lx_score + last_lx) / 2
+        last_lx = lx_score
+    else:
+        lx_score = last_lx  # If condition is not met, return the last score
+    return lx_score, last_lx
+
+
+def calculate_left_y_gaze_score(face_2d, last_ly, threshold):
+    if (face_2d[23, 1] - face_2d[27, 1]) != 0:
+        ly_score = (face_2d[468, 1] - face_2d[27, 1]) / (face_2d[23, 1] - face_2d[27, 1])
+        if abs(ly_score - last_ly) < threshold:
+            ly_score = (ly_score + last_ly) / 2
+        last_ly = ly_score
+    else:
+        ly_score = last_ly  # If condition is not met, return the last score
+    return ly_score, last_ly
+
+
+def calculate_right_x_gaze_score(face_2d, last_rx, threshold):
+    if (face_2d[359, 0] - face_2d[463, 0]) != 0:
+        rx_score = (face_2d[473, 0] - face_2d[463, 0]) / (face_2d[359, 0] - face_2d[463, 0])
+        if abs(rx_score - last_rx) < threshold:
+            rx_score = (rx_score + last_rx) / 2
+        last_rx = rx_score
+    else:
+        rx_score = last_rx  # If condition is not met, return the last score
+    return rx_score, last_rx
+
+
+def calculate_right_y_gaze_score(face_2d, last_ry, threshold):
+    if (face_2d[253, 1] - face_2d[257, 1]) != 0:
+        ry_score = (face_2d[473, 1] - face_2d[257, 1]) / (face_2d[253, 1] - face_2d[257, 1])
+        if abs(ry_score - last_ry) < threshold:
+            ry_score = (ry_score + last_ry) / 2
+        last_ry = ry_score
+    else:
+        ry_score = last_ry  # If condition is not met, return the last score
+    return ry_score, last_ry
 
 def calculate_eye_x_gaze_score(face_2d, iris_left, iris_right, LEFT_EYE_LEFT_CORNER, LEFT_EYE_RIGHT_CORNER):
     """
@@ -214,7 +216,7 @@ while cap.isOpened():
 
         face_2d = np.asarray(face_2d)
 
-        # Calculate left x gaze score
+        # # Calculate left x gaze score
         # lx_score, last_lx = calculate_left_x_gaze_score(face_2d, last_lx, threshold)
         #
         # # Calculate left y gaze score
@@ -225,7 +227,7 @@ while cap.isOpened():
         #
         # # Calculate right y gaze score
         # ry_score, last_ry = calculate_right_y_gaze_score(face_2d, last_ry, threshold)
-
+        #
         # print(lx_score)
         # print(ly_score)
         # print(rx_score)

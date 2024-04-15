@@ -1,12 +1,26 @@
 from customtkinter import *
-from PIL import Image, ImageTk
+from PIL import Image
 import configparser
+import sys, os
+import distutils
+import darkdetect
+import ctypes.wintypes
+from tkinter import filedialog, font, ttk
+from threading import Thread
 
 
 # ~~~~~~~~~~~~~~~~~~~ Configuration Handling ~~~~~~~~~~~~~~~~~~~ #
+def resource(relative_path):
+    base_path = getattr(
+        sys,
+        '_MEIPASS',
+        os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
+
 def save_preferences(theme=None, ui_scale=None):
     config = configparser.ConfigParser()
-    config.read('user_preferences.ini')  # Load existing preferences
+    config.read(resource('user_preferences.ini'))  # Load existing preferences
 
     if not config.has_section('Preferences'):
         config.add_section('Preferences')
@@ -17,13 +31,13 @@ def save_preferences(theme=None, ui_scale=None):
     if ui_scale is not None:
         config.set('Preferences', 'UI_Scale', str(ui_scale))
 
-    with open('user_preferences.ini', 'w') as configfile:
+    with open(resource('user_preferences.ini'), 'w') as configfile:
         config.write(configfile)
 
 
 def load_preferences():
     config = configparser.ConfigParser()
-    config.read('user_preferences.ini')
+    config.read(resource('user_preferences.ini'))
     theme = config.get('Preferences', 'Theme', fallback='Dark')  # Default to 'Dark' if not found
     ui_scale = config.getfloat('Preferences', 'UI_Scale', fallback=1.0)  # Default to 1.0 if not found
     return theme, ui_scale
@@ -50,8 +64,13 @@ def initialize_app():
     app.geometry("856x645")
     app.resizable(1, 1)
     app.title("Eye Click")
-    app.iconbitmap('logo.ico')
+    app.iconbitmap(resource("logo.ico"))
     set_appearance_mode(current_mode)  # Use the already loaded preference
+
+
+# def start_other_script_in_thread():
+# thread = Thread(target=run_other_script)
+# thread.start()
 
 
 # ~~~~~~~~~~~~~~~~~~~ Frame Setup ~~~~~~~~~~~~~~~~~~~ #
@@ -118,7 +137,7 @@ def setup_sidebar():
     sidebar_frame.pack(fill="y", anchor="w", side="left")
 
     # Logo
-    logo_img_data = Image.open("logo.ico")
+    logo_img_data = Image.open(resource("logo.ico"))
     logo_img = CTkImage(dark_image=logo_img_data, light_image=logo_img_data, size=(100, 110))
     CTkLabel(master=sidebar_frame, text="", image=logo_img).pack(pady=(38, 0), anchor="center")
 
@@ -138,19 +157,19 @@ def setup_main_view():
 # ~~~~~~~~~~~~~~~~~~~ Sidebar Buttons Setup ~~~~~~~~~~~~~~~~~~~ #
 def setup_sidebar_buttons():
     global button_font_size, sidebar_frame
-    analytics_img_data = Image.open("analytics_icon.png")
+    analytics_img_data = Image.open(resource("analytics_icon.png"))
     analytics_img = CTkImage(dark_image=analytics_img_data, light_image=analytics_img_data)
     CTkButton(master=sidebar_frame, image=analytics_img, text="Dashboard", fg_color="transparent",
               font=("Arial Bold", button_font_size), hover_color="#4541B6", anchor="w",
               command=lambda: show_frame(dashboard_frame)).pack(side="top", fill="x", anchor="w", pady=(60, 0))
 
-    list_img_data = Image.open("list_icon.png")
+    list_img_data = Image.open(resource("list_icon.png"))
     list_img = CTkImage(dark_image=list_img_data, light_image=list_img_data)
     CTkButton(master=sidebar_frame, image=list_img, text="Instructions", fg_color="transparent",
               font=("Arial Bold", button_font_size), hover_color="#4541B6", anchor="w",
               command=lambda: show_frame(instruction_frame)).pack(side="top", fill="x", anchor="w", pady=(16, 0))
 
-    settings_img_data = Image.open("settings_icon.png")
+    settings_img_data = Image.open(resource("settings_icon.png"))
     settings_img = CTkImage(dark_image=settings_img_data, light_image=settings_img_data)
     CTkButton(master=sidebar_frame, image=settings_img, text="Settings", fg_color="transparent",
               font=("Arial Bold", button_font_size), hover_color="#4541B6", anchor="w",
@@ -182,9 +201,9 @@ def setup_dashboard_content():
     description_label.pack(pady=10)
 
     # Start Button at the bottom
-    start_button = CTkButton(master=dashboard_frame, text="Start", fg_color="#4541B6",
-                             command=lambda: print("Starting..."))
-    start_button.pack(pady=(10, 20))
+    # start_button = CTkButton(master=dashboard_frame, text="Start", fg_color="#4541B6",
+    #                          command=start_other_script_in_thread())
+    # start_button.pack(pady=(10, 20))
 
 
 # ~~~~~~~~~~~~~~~~~~~ Instructions Content ~~~~~~~~~~~~~~~~~~~ #
@@ -198,7 +217,7 @@ def image_and_labels(labels, images):
         text_label.pack(pady=(10, 0))
 
         # Load the image
-        original_image = Image.open(img_path)
+        original_image = Image.open(resource(img_path))
         base_width, base_height = original_image.size
         new_size = ((base_width * current_ui_scale) / 1.5, (base_height * current_ui_scale) / 1.5)
         image = Image.open(img_path)

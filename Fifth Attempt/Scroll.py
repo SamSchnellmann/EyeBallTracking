@@ -1,204 +1,172 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import pyautogui
 
-############## PARAMETERS #######################################################
+# Set the scroll sensitivity
+SCROLL_SENSITIVITY = 50
+# HORIZONTAL_SCROLL_SENSITIVITY = 100
 
-# Set these values to show/hide certain vectors of the estimation
-draw_gaze = True
-draw_full_axis = True
-draw_headpose = False
+# Set mouse sensitivity
+MOUSE_SENSITIVITY = 2
 
-# Gaze Score multiplier (Higher multiplier = Gaze affects headpose estimation more)
-x_score_multiplier = 10
-y_score_multiplier = 10
+# Get the screen width and height
+screen_width, screen_height = pyautogui.size()
 
-# Threshold of how close scores should be to average between frames
-threshold = .3
 
-#################################################################################
+def initialize():
+    mp_face_mesh = mp.solutions.face_mesh
+    global face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
-                                  refine_landmarks=True,
-                                  max_num_faces=2,
-                                  min_detection_confidence=0.5)
-cap = cv2.VideoCapture(0)
+    global mp_drawing
+    mp_drawing = mp.solutions.drawing_utils
 
-face_3d = np.array([
-    [0.0, 0.0, 0.0],  # Nose tip
-    [0.0, -330.0, -65.0],  # Chin
-    [-225.0, 170.0, -135.0],  # Left eye left corner
-    [225.0, 170.0, -135.0],  # Right eye right corner
-    [-150.0, -150.0, -125.0],  # Left Mouth corner
-    [150.0, -150.0, -125.0]  # Right mouth corner
-], dtype=np.float64)
+    global drawing_spec
+    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
-# Reposition left eye corner to be the origin
-leye_3d = np.array(face_3d)
-leye_3d[:, 0] += 225
-leye_3d[:, 1] -= 175
-leye_3d[:, 2] += 135
+    global cap
+    cap = cv2.VideoCapture(0)
 
-# Reposition right eye corner to be the origin
-reye_3d = np.array(face_3d)
-reye_3d[:, 0] -= 225
-reye_3d[:, 1] -= 175
-reye_3d[:, 2] += 135
 
-# Gaze scores from the previous frame
-last_lx, last_rx = 0, 0
-last_ly, last_ry = 0, 0
+def process_image():
+    success, image = cap.read()
+    if not success:
+        return None
 
-while cap.isOpened():
-    success, img = cap.read()
-
-    # Flip + convert img from BGR to RGB
-    img = cv2.cvtColor(cv2.flip(img, 1), cv2.COLOR_BGR2RGB)
+    # Flip the image horizontally for a later selfie-view display
+    # Also convert the color space from BGR to RGB
+    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
 
     # To improve performance
-    img.flags.writeable = False
+    image.flags.writeable = False
 
     # Get the result
-    results = face_mesh.process(img)
-    img.flags.writeable = True
+    results = face_mesh.process(image)
+
+    # To improve performance
+    image.flags.writeable = True
 
     # Convert the color space from RGB to BGR
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-    (img_h, img_w, img_c) = img.shape
+    return image, results
+
+
+def draw_landmarks(image, results):
+    img_h, img_w, _ = image.shape
+    face_3d = []
     face_2d = []
 
-    if not results.multi_face_landmarks:
-        continue
+    if results.multi_face_landmarks:
+        for face_landmarks in results.multi_face_landmarks:
+            for idx, lm in enumerate(face_landmarks.landmark):
+                if idx == 33 or idx == 263 or idx == 1 or idx == 61 or idx == 291 or idx == 199:
+                    if idx == 1:
+                        nose_2d = (lm.x * img_w, lm.y * img_h)
+                        nose_3d = (lm.x * img_w, lm.y * img_h, lm.z * 3000)
 
-    for face_landmarks in results.multi_face_landmarks:
-        face_2d = []
-        for idx, lm in enumerate(face_landmarks.landmark):
-            # Convert landmark x and y to pixel coordinates
-            x, y = int(lm.x * img_w), int(lm.y * img_h)
+                    x, y = int(lm.x * img_w), int(lm.y * img_h)
 
-            # Add the 2D coordinates to an array
-            face_2d.append((x, y))
+                    # Get the 2D Coordinates
+                    face_2d.append([x, y])
 
-        # Get relevant landmarks for headpose estimation
-        face_2d_head = np.array([
-            face_2d[1],  # Nose
-            face_2d[199],  # Chin
-            face_2d[33],  # Left eye left corner
-            face_2d[263],  # Right eye right corner
-            face_2d[61],  # Left mouth corner
-            face_2d[291]  # Right mouth corner
-        ], dtype=np.float64)
+                    # Get the 3D Coordinates
+                    face_3d.append([x, y, lm.z])
 
-        face_2d = np.asarray(face_2d)
+            face_2d = np.array(face_2d, dtype=np.float64)
+            face_3d = np.array(face_3d, dtype=np.float64)
 
-        # Calculate left x gaze score
-        if (face_2d[243, 0] - face_2d[130, 0]) != 0:
-            lx_score = (face_2d[468, 0] - face_2d[130, 0]) / (face_2d[243, 0] - face_2d[130, 0])
-            if abs(lx_score - last_lx) < threshold:
-                lx_score = (lx_score + last_lx) / 2
-            last_lx = lx_score
+            # The camera matrix
+            focal_length = 1 * img_w
+            cam_matrix = np.array([[focal_length, 0, img_h / 2],
+                                   [0, focal_length, img_w / 2],
+                                   [0, 0, 1]])
 
-        # Calculate left y gaze score
-        if (face_2d[23, 1] - face_2d[27, 1]) != 0:
-            ly_score = (face_2d[468, 1] - face_2d[27, 1]) / (face_2d[23, 1] - face_2d[27, 1])
-            if abs(ly_score - last_ly) < threshold:
-                ly_score = (ly_score + last_ly) / 2
-            last_ly = ly_score
+            # The distortion parameters
+            dist_matrix = np.zeros((4, 1), dtype=np.float64)
 
-        # Calculate right x gaze score
-        if (face_2d[359, 0] - face_2d[463, 0]) != 0:
-            rx_score = (face_2d[473, 0] - face_2d[463, 0]) / (face_2d[359, 0] - face_2d[463, 0])
-            if abs(rx_score - last_rx) < threshold:
-                rx_score = (rx_score + last_rx) / 2
-            last_rx = rx_score
+            # Solve PnP
+            success, rot_vec, trans_vec = cv2.solvePnP(face_3d, face_2d, cam_matrix, dist_matrix)
 
-        # Calculate right y gaze score
-        if (face_2d[253, 1] - face_2d[257, 1]) != 0:
-            ry_score = (face_2d[473, 1] - face_2d[257, 1]) / (face_2d[253, 1] - face_2d[257, 1])
-            if abs(ry_score - last_ry) < threshold:
-                ry_score = (ry_score + last_ry) / 2
-            last_ry = ry_score
+            # Get rotational matrix
+            rmat, jac = cv2.Rodrigues(rot_vec)
 
-        # The camera matrix
-        focal_length = 1 * img_w
-        cam_matrix = np.array([[focal_length, 0, img_h / 2],
-                               [0, focal_length, img_w / 2],
-                               [0, 0, 1]])
+            # Get angles
+            angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rmat)
 
-        # Distortion coefficients
-        dist_coeffs = np.zeros((4, 1), dtype=np.float64)
+            # Get the y rotation degree
+            x = angles[0] * 360
+            y = angles[1] * 360
+            z = angles[2] * 360
 
-        # Solve PnP
-        _, l_rvec, l_tvec = cv2.solvePnP(leye_3d, face_2d_head, cam_matrix, dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
-        _, r_rvec, r_tvec = cv2.solvePnP(reye_3d, face_2d_head, cam_matrix, dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
+            mouse_dx = y * MOUSE_SENSITIVITY
+            mouse_dy = -x * MOUSE_SENSITIVITY  # Inverting x because screen coordinates go from top to bottom
 
-        # Get rotational matrix from rotational vector
-        l_rmat, _ = cv2.Rodrigues(l_rvec)
-        r_rmat, _ = cv2.Rodrigues(r_rvec)
+            # Get current mouse position
+            current_mouse_x, current_mouse_y = pyautogui.position()
 
-        # [0] changes pitch
-        # [1] changes roll
-        # [2] changes yaw
-        # +1 changes ~45 degrees (pitch down, roll tilts left (counterclockwise), yaw spins left (counterclockwise))
+            # Calculate new position and adjust if it goes out of bounds
+            new_mouse_x = current_mouse_x + mouse_dx
+            new_mouse_y = current_mouse_y + mouse_dy
 
-        # Adjust headpose vector with gaze score
-        l_gaze_rvec = np.array(l_rvec)
-        l_gaze_rvec[2][0] -= (lx_score - .5) * x_score_multiplier
-        l_gaze_rvec[0][0] += (ly_score - .5) * y_score_multiplier
+            # Ensure new mouse position is within screen bounds
+            new_mouse_x = min(max(new_mouse_x, 0), screen_width)
+            new_mouse_y = min(max(new_mouse_y, 0), screen_height)
 
-        r_gaze_rvec = np.array(r_rvec)
-        r_gaze_rvec[2][0] -= (rx_score - .5) * x_score_multiplier
-        r_gaze_rvec[0][0] += (ry_score - .5) * y_score_multiplier
+            # Calculate adjusted mouse movement
+            adjusted_mouse_dx = new_mouse_x - current_mouse_x
+            adjusted_mouse_dy = new_mouse_y - current_mouse_y
 
-        # --- Projection ---
+            # See where the user's head tilting
+            if y < -10:
+                text = "Looking Left"
+                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+                # pyautogui.hscroll(HORIZONTAL_SCROLL_SENSITIVITY)
+            elif y > 10:
+                text = "Looking Right"
+                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+                # pyautogui.hscroll(-HORIZONTAL_SCROLL_SENSITIVITY)
+            elif x < 0:
+                text = "Looking Down"
+                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+                # pyautogui.scroll(-SCROLL_SENSITIVITY)
+            elif x > 10:
+                text = "Looking Up"
+                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+                # pyautogui.scroll(SCROLL_SENSITIVITY)
+            else:
+                text = "Forward"
 
-        # Get left eye corner as integer
-        l_corner = face_2d_head[2].astype(np.int32)
+            # Display the nose direction
+            nose_3d_projection = cv2.projectPoints(nose_3d, rot_vec, trans_vec, cam_matrix, dist_matrix)
 
-        # Project axis of rotation for left eye
-        axis = np.float32([[-100, 0, 0], [0, 100, 0], [0, 0, 300]]).reshape(-1, 3)
-        l_axis, _ = cv2.projectPoints(axis, l_rvec, l_tvec, cam_matrix, dist_coeffs)
-        l_gaze_axis, _ = cv2.projectPoints(axis, l_gaze_rvec, l_tvec, cam_matrix, dist_coeffs)
+            p1 = (int(nose_2d[0]), int(nose_2d[1]))
+            p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
 
-        # Draw axis of rotation for left eye
-        if draw_headpose:
-            if draw_full_axis:
-                cv2.line(img, l_corner, tuple(np.ravel(l_axis[0]).astype(np.int32)), (200, 200, 0), 3)
-                cv2.line(img, l_corner, tuple(np.ravel(l_axis[1]).astype(np.int32)), (0, 200, 0), 3)
-            cv2.line(img, l_corner, tuple(np.ravel(l_axis[2]).astype(np.int32)), (0, 200, 200), 3)
+            cv2.line(image, p1, p2, (255, 255, 0), 3)
 
-        if draw_gaze:
-            if draw_full_axis:
-                cv2.line(img, l_corner, tuple(np.ravel(l_gaze_axis[0]).astype(np.int32)), (255, 0, 0), 3)
-                cv2.line(img, l_corner, tuple(np.ravel(l_gaze_axis[1]).astype(np.int32)), (0, 255, 0), 3)
-            cv2.line(img, l_corner, tuple(np.ravel(l_gaze_axis[2]).astype(np.int32)), (0, 0, 255), 3)
+            # Add the text on the image
+            cv2.putText(image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
+            cv2.putText(image, "x: " + str(np.round(x, 2)), (500, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(image, "y: " + str(np.round(y, 2)), (500, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(image, "z: " + str(np.round(z, 2)), (500, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-        # Get left eye corner as integer
-        r_corner = face_2d_head[3].astype(np.int32)
 
-        # Get left eye corner as integer
-        r_axis, _ = cv2.projectPoints(axis, r_rvec, r_tvec, cam_matrix, dist_coeffs)
-        r_gaze_axis, _ = cv2.projectPoints(axis, r_gaze_rvec, r_tvec, cam_matrix, dist_coeffs)
+def main():
+    initialize()
+    while cap.isOpened():
+        processed_image = process_image()
+        if processed_image is None:
+            break
+        image, results = processed_image
+        draw_landmarks(image, results)
+        cv2.imshow('Head Pose Estimation', image)
+        if cv2.waitKey(5) & 0xFF == 27:
+            break
+    cap.release()
+    cv2.destroyAllWindows()
 
-        # Draw axis of rotation for left eye
-        if draw_headpose:
-            if draw_full_axis:
-                cv2.line(img, r_corner, tuple(np.ravel(r_axis[0]).astype(np.int32)), (200, 200, 0), 3)
-                cv2.line(img, r_corner, tuple(np.ravel(r_axis[1]).astype(np.int32)), (0, 200, 0), 3)
-            cv2.line(img, r_corner, tuple(np.ravel(r_axis[2]).astype(np.int32)), (0, 200, 200), 3)
 
-        if draw_gaze:
-            if draw_full_axis:
-                cv2.line(img, r_corner, tuple(np.ravel(r_gaze_axis[0]).astype(np.int32)), (255, 0, 0), 3)
-                cv2.line(img, r_corner, tuple(np.ravel(r_gaze_axis[1]).astype(np.int32)), (0, 255, 0), 3)
-            cv2.line(img, r_corner, tuple(np.ravel(r_gaze_axis[2]).astype(np.int32)), (0, 0, 255), 3)
-
-    cv2.imshow('Head Pose Estimation', img)
-
-    if cv2.waitKey(5) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()
