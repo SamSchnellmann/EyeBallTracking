@@ -1,12 +1,25 @@
-from customtkinter import *
-from PIL import Image
 import configparser
-import sys, os
-import distutils
-import darkdetect
-import ctypes.wintypes
-from tkinter import filedialog, font, ttk
-from threading import Thread
+import os
+import sys
+import subprocess
+
+from PIL import Image
+from customtkinter import *
+
+
+# ~~~~~~~~~~~~~~~~~~~ Handle Script ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+def start_other_script():
+    try:
+        # Assuming the script is in the same directory and named 'other_script.py'
+        script_path = resource('Scroll.py')  # Adjust this if your path differs
+        subprocess.Popen(['python', script_path], start_new_session=True)
+    except Exception as e:
+        print(f"Failed to start script: {e}")
+    finally:
+        # Terminate the GUI
+        app.quit()  # Gracefully stop the tkinter loop
+        app.destroy()  # Destroy all widgets
+        sys.exit()  # Safely exit the program
 
 
 # ~~~~~~~~~~~~~~~~~~~ Configuration Handling ~~~~~~~~~~~~~~~~~~~ #
@@ -66,11 +79,6 @@ def initialize_app():
     app.title("Eye Click")
     app.iconbitmap(resource("logo.ico"))
     set_appearance_mode(current_mode)  # Use the already loaded preference
-
-
-# def start_other_script_in_thread():
-# thread = Thread(target=run_other_script)
-# thread.start()
 
 
 # ~~~~~~~~~~~~~~~~~~~ Frame Setup ~~~~~~~~~~~~~~~~~~~ #
@@ -201,9 +209,9 @@ def setup_dashboard_content():
     description_label.pack(pady=10)
 
     # Start Button at the bottom
-    # start_button = CTkButton(master=dashboard_frame, text="Start", fg_color="#4541B6",
-    #                          command=start_other_script_in_thread())
-    # start_button.pack(pady=(10, 20))
+    start_button = CTkButton(master=dashboard_frame, text="Start", fg_color="#4541B6",
+                             command=start_other_script)
+    start_button.pack(pady=(10, 20))
 
 
 # ~~~~~~~~~~~~~~~~~~~ Instructions Content ~~~~~~~~~~~~~~~~~~~ #
