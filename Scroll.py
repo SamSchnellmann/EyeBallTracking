@@ -2,16 +2,49 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import pyautogui
+import tkinter as tk
+import threading
+import time
+
+# Variable to track the last time 'toggle_mode' was called
+last_toggle_time = 0
 
 # Set the scroll sensitivity
 SCROLL_SENSITIVITY = 50
-# HORIZONTAL_SCROLL_SENSITIVITY = 100
 
 # Set mouse sensitivity
 MOUSE_SENSITIVITY = 2
 
 # Get the screen width and height
 screen_width, screen_height = pyautogui.size()
+
+# Global variable to track the current mode
+current_mode = "MOUSE"  # Can be "MOUSE" or "SCROLL"
+
+
+# Toggle mode based on facial gesture
+def toggle_mode():
+    global current_mode
+    current_mode = "SCROLL" if current_mode == "MOUSE" else "MOUSE"
+    show_notification_async(f"Switched to {current_mode} mode", duration=3000)
+
+
+def show_notification(message, duration=3000):
+    root = tk.Tk()
+    root.title("Notification")
+    label = tk.Label(root, text=message, font=('Helvetica', 10))
+    label.pack(side="top", fill="both", expand=True, padx=20, pady=20)
+    # Set the window position
+    root.geometry("+{}+{}".format(100, 100))
+    # Make the window appear above other windows
+    root.lift()
+    root.attributes('-topmost', True)
+    root.after(duration, root.destroy)  # Schedule the window to close after 'duration' milliseconds
+    root.mainloop()
+
+
+def show_notification_async(message, duration=3000):
+    threading.Thread(target=show_notification, args=(message, duration)).start()
 
 
 def initialize():
@@ -51,6 +84,62 @@ def process_image():
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
     return image, results
+
+
+def handle_face_direction(x, y, adjusted_mouse_dx, adjusted_mouse_dy):
+    text = "Forward"  # Default text
+
+    if current_mode == "MOUSE":
+        # Handling mouse movement based on head position
+        if y < -10:
+            text = "Looking Left"
+            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+        elif y > 10:
+            text = "Looking Right"
+            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+        elif x < 0:
+            text = "Looking Down"
+            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+        elif x > 10:
+            text = "Looking Up"
+            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+
+    elif current_mode == "SCROLL":
+        # Handling scrolling based on head position
+        if y < -10:
+            text = "Looking Left"
+        elif y > 10:
+            text = "Looking Right"
+        elif x < 0:
+            text = "Looking Down"
+            pyautogui.scroll(-SCROLL_SENSITIVITY)
+        elif x > 10:
+            text = "Looking Up"
+            pyautogui.scroll(SCROLL_SENSITIVITY)
+
+    return text
+
+
+def check_mouth_open(landmarks, threshold=0.01):
+    global last_toggle_time  # Use the global variable to track the last toggle time
+    cooldown_period = 5  # Cooldown period in seconds
+
+    # Example landmarks in MediaPipe, you may need to adjust based on actual indices
+    upper_lip = landmarks[13]  # Adjust index as necessary
+    lower_lip = landmarks[14]  # Adjust index as necessary
+
+    # Calculate the vertical distance between the upper and lower lip
+    mouth_open_distance = abs(upper_lip.y - lower_lip.y)
+
+    current_time = time.time()
+    if mouth_open_distance > threshold and (current_time - last_toggle_time) > cooldown_period:
+        print("Mouth Open")
+        toggle_mode()
+        last_toggle_time = current_time  # Update the last toggle time
+        return True
+
+    print("Mouth Closed")
+    return False
 
 
 def draw_landmarks(image, results):
@@ -118,28 +207,12 @@ def draw_landmarks(image, results):
             adjusted_mouse_dx = new_mouse_x - current_mouse_x
             adjusted_mouse_dy = new_mouse_y - current_mouse_y
 
-            # See where the user's head tilting
-            if y < -10:
-                text = "Looking Left"
-                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-                # pyautogui.hscroll(HORIZONTAL_SCROLL_SENSITIVITY)
-            elif y > 10:
-                text = "Looking Right"
-                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-                # pyautogui.hscroll(-HORIZONTAL_SCROLL_SENSITIVITY)
-            elif x < 0:
-                text = "Looking Down"
-                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-                # pyautogui.scroll(-SCROLL_SENSITIVITY)
-            elif x > 10:
-                text = "Looking Up"
-                pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-                # pyautogui.scroll(SCROLL_SENSITIVITY)
-            else:
-                text = "Forward"
+            text = handle_face_direction(x, y, adjusted_mouse_dx, adjusted_mouse_dy)
+
+            check_mouth_open(face_landmarks.landmark)
 
             # Display the nose direction
-            nose_3d_projection = cv2.projectPoints(nose_3d, rot_vec, trans_vec, cam_matrix, dist_matrix)
+            cv2.projectPoints(nose_3d, rot_vec, trans_vec, cam_matrix, dist_matrix)
 
             p1 = (int(nose_2d[0]), int(nose_2d[1]))
             p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
