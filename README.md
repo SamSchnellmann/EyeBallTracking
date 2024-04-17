@@ -13,3 +13,15 @@ diffrent blink patterns as well as double click and scroll up and down.
 - Face Tracking
 - Eye Tracking
 - Scroll / Previous / Next Page Gesture Commands
+
+# System Requirements
+
+## Hardware
+- **Processor**: Modern multi-core processor (Intel i5/i7/i9, AMD Ryzen).
+- **RAM**: Minimum 8GB, 16GB recommended.
+- **Webcam**: Required for video input.
+- **Graphics Card**: Optional but recommended for enhanced performance.
+
+## Software
+- **Operating System**: Compatible with Windows, macOS, and Linux.
+- **Python**: Version 3.6 or later.
