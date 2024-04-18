@@ -59,7 +59,7 @@ def initialize():
     drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
     global cap
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
 
 def process_image():
