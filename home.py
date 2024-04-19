@@ -3,23 +3,22 @@ import os
 import sys
 import subprocess
 
-from PIL import Image
+from PIL import Image, ImageTk
 from customtkinter import *
+from pystray import MenuItem as item, Icon as tray_icon
 
 
 # ~~~~~~~~~~~~~~~~~~~ Handle Script ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 def start_other_script():
     try:
-        # Assuming the script is in the same directory and named 'other_script.py'
-        script_path = resource('Scroll.py')  # Adjust this if your path differs
+        # Launch the other script
+        script_path = resource('Scroll.py')  # Make sure the path is correct
         subprocess.Popen(['python', script_path], start_new_session=True)
     except Exception as e:
         print(f"Failed to start script: {e}")
-    finally:
-        # Terminate the GUI
-        app.quit()  # Gracefully stop the tkinter loop
-        app.destroy()  # Destroy all widgets
-        sys.exit()  # Safely exit the program
+
+    # Minimize the window and show in system tray
+    app.iconify()
 
 
 # ~~~~~~~~~~~~~~~~~~~ Configuration Handling ~~~~~~~~~~~~~~~~~~~ #
@@ -218,22 +217,25 @@ def setup_dashboard_content():
 
 def image_and_labels(labels, images):
     global info_font_size
+    # Define a standard size for all images
+    standard_size = (200, 150)  # 200 pixels wide, 150 pixels tall
+
     for text, img_path in zip(labels, images):
         # Create and pack the text label
         text_label = CTkLabel(master=instruction_frame, text=text, font=("Arial", info_font_size), wraplength=650,
                               justify="left")
         text_label.pack(pady=(10, 0))
 
-        # Load the image
+        # Load the image and resize it to the standard size
         original_image = Image.open(resource(img_path))
-        base_width, base_height = original_image.size
-        new_size = ((base_width * current_ui_scale) / 1.5, (base_height * current_ui_scale) / 1.5)
-        image = Image.open(img_path)
-        photo = CTkImage(image, size=new_size)
+        resized_image = original_image.resize(standard_size, Image.LANCZOS)  # Resize and maintain quality
+
+        # Create a photo image object for use with customtkinter
+        photo = ImageTk.PhotoImage(image=resized_image)
 
         # Create and pack the image label
         image_label = CTkLabel(master=instruction_frame, image=photo, text=" ")
-        image_label.image = photo  # Keep a reference!
+        image_label.image = photo  # Keep a reference to avoid garbage collection
         image_label.pack(pady=(0, 10))
 
 
@@ -251,21 +253,17 @@ def setup_instruction_content():
     # Text instructions
     instructions_text = [
         "      1. Click on the start button on the dashboard to start the application.",
-        "      2. Follow through the calibration instructions.",
-        "      3. To scroll {{INSERT INSTRUCTIONS HERE}}",
-        "      4. To click {{INSERT INSTRUCTIONS HERE}}",
-        "      5. {{INCLUDE MORE CONTROLS}}",
-        "      6. Once done, {{INSERT INSTRUCTIONS HERE}}"
+        "      2. Open your mouth to toggle between scrolling and mouse navigation.",
+        "      3. To scroll nod your head up and down.",
+        "      4. To move your mouse move your head like a joystick"
     ]
 
     # Image paths corresponding to each step
     instructions_images = [
         "startInstructions.png",
-        "startInstructions.png",  # Replace with actual image paths
-        "startInstructions.png",  # Replace with actual image paths
-        "startInstructions.png",  # Replace with actual image paths
-        "startInstructions.png",  # Replace with actual image paths
-        "startInstructions.png"  # Replace with actual image paths
+        "mouth.png",
+        "nod.png",
+        "joystick.png"
     ]
 
     # Dynamically create labels and images based on instructions
