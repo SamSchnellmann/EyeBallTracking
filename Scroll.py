@@ -6,6 +6,8 @@ import tkinter as tk
 import threading
 import time
 
+pyautogui.FAILSAFE = False
+
 # Variable to track the last time 'toggle_mode' was called
 last_toggle_time = 0
 
