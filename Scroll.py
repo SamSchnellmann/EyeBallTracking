@@ -9,6 +9,22 @@ import time
 # Variable to track the last time 'toggle_mode' was called
 last_toggle_time = 0
 
+last_blink_time = 0
+
+left_eye_open = True
+
+right_eye_open = True
+
+blink_interval = 0
+
+left_blink_list = []
+right_blink_list = []
+blink_list = []
+
+left_blink_interval = 0
+
+right_blink_interval = 0
+
 # Set the scroll sensitivity
 SCROLL_SENSITIVITY = 50
 
@@ -50,7 +66,7 @@ def show_notification_async(message, duration=3000):
 def initialize():
     mp_face_mesh = mp.solutions.face_mesh
     global face_mesh
-    face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+    face_mesh = mp_face_mesh.FaceMesh(refine_landmarks = True, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
     global mp_drawing
     mp_drawing = mp.solutions.drawing_utils
@@ -59,7 +75,7 @@ def initialize():
     drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
     global cap
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
 
 def process_image():
@@ -85,37 +101,115 @@ def process_image():
 
     return image, results
 
+def check_if_scroll(y):
+    global scroll_queue 
+    scroll_queue = [] 
+
+    if len(scroll_queue) < 30:
+        scroll_queue.append(y)
+    else:
+        scroll_queue.pop(0)
+        scroll_queue.append(y)
+
+def if_hit_gate(y):
+    global new_gate
+
+    global previous_gate
+
+def handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, mode, scroll_direction):
+
+    # Either moves the mouse in the direction of gaze or scrolls depending on vertical gaze
+    if mode == "MOUSE":
+        pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
+    elif mode == "SCROLL":
+        if(x > 0):
+            pyautogui.scroll(SCROLL_SENSITIVITY)
+        elif(x < 0):
+            pyautogui.scroll(-SCROLL_SENSITIVITY)
+
+# Function for handling left and right eye blinks to clicks
+def handle_click(landmarks):
+
+    # Declaring globals
+    global left_eye_open
+    global right_eye_open
+
+    global left_blink_interval
+    global right_blink_interval
+
+    global left_blink_list
+    global right_blink_list
+
+    
+    left_eye = [landmarks[159], landmarks[145]]
+    right_eye = [landmarks[386], landmarks[374]]
+
+    # Assigning left and right eye landmark current values
+    top_lex, top_ley = (1000 * left_eye[0].x), (1000 * left_eye[0].y)
+    bottom_lex, bottom_ley = (1000 * left_eye[1].x) , (1000 * left_eye[1].y)
+
+    top_rex, top_rey = (1000 * right_eye[0].x), (1000 * right_eye[0].y)
+    bottom_rex, bottom_rey = (1000 * right_eye[1].x), (1000 * right_eye[1].y)
+
+    # If statements that append data to an array for every either eye is closed
+    if(abs(top_ley - bottom_ley) < 6 ):
+
+        left_blink_list.append("left")
+        if(left_eye_open):
+            left_blink_interval = time.time()
+            left_eye_open = False
+    else:
+        left_eye_open = True
+
+    if(abs(top_rey - bottom_rey) < 6 ):
+
+        right_blink_list.append("right")
+        if(right_eye_open):
+            right_blink_interval = time.time()
+            right_eye_open = False
+    else:
+        right_eye_open = True
+
+    
+    # Statements that empty array and perform click if 
+    # Either list has more than 3 items in them
+    if(left_blink_list.count('left') > 3):
+        pyautogui.click(button = 'left')
+        left_blink_interval = time.time()
+        left_blink_list.clear()
+    elif(left_eye_open == True):
+        left_blink_interval = time.time()
+        left_blink_list.clear()
+
+    if(right_blink_list.count('right') > 3):
+        pyautogui.click(button = 'right')
+        right_blink_interval = time.time()
+        right_blink_list.clear()
+    elif(right_eye_open == True):
+        right_blink_interval = time.time()
+        right_blink_list.clear()
+
+
+# def handle_back(landmarks, threshold=30):
+
+#     pass
 
 def handle_face_direction(x, y, adjusted_mouse_dx, adjusted_mouse_dy):
     text = "Forward"  # Default text
 
-    if current_mode == "MOUSE":
-        # Handling mouse movement based on head position
-        if y < -10:
-            text = "Looking Left"
-            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-        elif y > 10:
-            text = "Looking Right"
-            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-        elif x < 0:
-            text = "Looking Down"
-            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-        elif x > 10:
-            text = "Looking Up"
-            pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-
-    elif current_mode == "SCROLL":
-        # Handling scrolling based on head position
-        if y < -10:
-            text = "Looking Left"
-        elif y > 10:
-            text = "Looking Right"
-        elif x < 0:
-            text = "Looking Down"
-            pyautogui.scroll(-SCROLL_SENSITIVITY)
-        elif x > 10:
-            text = "Looking Up"
-            pyautogui.scroll(SCROLL_SENSITIVITY)
+    # Determining gaze direction, setting text and calling handle mouse
+    if y < -10:
+        text = "Looking Left"
+        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode, 0)
+    elif y > 10:
+        text = "Looking Right"
+        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode, 0)
+    elif x < 0:
+        text = "Looking Down"
+        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode, -1)
+    elif x > 10:
+        text = "Looking Up"
+        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode, 1)
 
     return text
 
@@ -133,12 +227,12 @@ def check_mouth_open(landmarks, threshold=0.01):
 
     current_time = time.time()
     if mouth_open_distance > threshold and (current_time - last_toggle_time) > cooldown_period:
-        print("Mouth Open")
+        # print("Mouth Open")
         toggle_mode()
         last_toggle_time = current_time  # Update the last toggle time
         return True
 
-    print("Mouth Closed")
+    # print("Mouth Closed")
     return False
 
 
@@ -209,6 +303,9 @@ def draw_landmarks(image, results):
 
             text = handle_face_direction(x, y, adjusted_mouse_dx, adjusted_mouse_dy)
 
+            if current_mode == "MOUSE":
+                handle_click(face_landmarks.landmark)
+
             check_mouth_open(face_landmarks.landmark)
 
             # Display the nose direction
@@ -218,6 +315,13 @@ def draw_landmarks(image, results):
             p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
 
             cv2.line(image, p1, p2, (255, 255, 0), 3)
+
+            for land in face_landmarks.landmark:
+                x1 = int(land.x * image.shape[1])
+                y1 = int(land.y * image.shape[0])
+                cv2.circle(image, (x1, y1), 3, (0, 255, 255))
+
+        
 
             # Add the text on the image
             cv2.putText(image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
