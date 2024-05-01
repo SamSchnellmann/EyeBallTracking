@@ -25,3 +25,42 @@ diffrent blink patterns as well as double click and scroll up and down.
 ## Software
 - **Operating System**: Compatible with Windows, macOS, and Linux.
 - **Python**: Version 3.6 or later.
+
+# Python Script Requirements and Installation Guide
+
+## Requirements
+
+- Python 3.6 or later
+- OpenCV
+- Mediapipe
+- NumPy
+- PyAutoGUI
+- CustomTkinter
+
+## Installation
+
+1. **Install Python 3.11.7**: Ensure Python 3.11.7 is installed and properly configured on your system. 
+
+2. **Install Dependencies**: Open your terminal or command prompt and navigate to the directory where `home.py` and `requirements.txt` are stored along with this readme file. Then, run the following command:
+
+    
+    pip install -r requirements.txt
+    
+
+    This command will install all the required dependencies listed in the `requirements.txt` file.
+
+## Running the Script
+
+1. **Run the Script**: With your terminal or command prompt still open to the directory where your Python script (`home.py`) is located, execute the following command to start the Python script:
+
+    python home.py
+
+    This command will run the Python script and execute the code within it.
+
+
+## Using EyeClick
+
+1. **Home GUI**: Once you have successfully run the home.py script, you will see the EyeClick home GUI open on your desktop on the Dashboard. 
+
+2. **Running EyeClick**: To run the EyeClick software, click the start button. The start up process will take a short time to run, and once it is complete you will see your camera stream pop up on your screen. Congratulations, you are now using EyeClick! For further instructions on how to use the software, please refer to the `Instructions` page of the EyeClick launcher.
+
