@@ -156,16 +156,6 @@ def initialize_app():
 
 # ~~~~~~~~~~~~~~~~~~~ Frame Setup ~~~~~~~~~~~~~~~~~~~ #
 def show_frame(frame_to_show):
-    """
-    Controls the display of different frames within the application by showing the specified frame and hiding others.
-
-    Args:
-    frame_to_show (tk.Frame): The frame that should be made visible.
-
-    This function manages the visibility states of various frames within the application's interface.
-    It hides all frames currently displayed and then shows the specified frame, allowing for dynamic switching
-    of the user interface to different sections like dashboard, instructions, or settings.
-    """
     # Hide all currently displayed frames
     dashboard_frame.pack_forget()
     instruction_frame.pack_forget()
@@ -426,15 +416,16 @@ def setup_instruction_content():
         "      2. Open your mouth to toggle between scrolling and mouse navigation.",
         "      3. To scroll nod your head up and down.",
         "      4. To move your mouse move your head like a joystick.",
-        "5. To right click wink your right eye. To left click wink your left eye.\nBeware... due to current "
-        "limitations, you may have to hold down the wink for around a second\n"
+        "      5. To right click wink your right eye for a second. To left click wink your left eye for a second.",
+        "      6. To go back a page tilt your head to the left. To go forward a page tilt your head to the right."
     ]
     instructions_images = [
         "startInstructions.png",
         "mouth.png",
         "nod.png",
         "joystick.png",
-        "wink.png"
+        "wink.png",
+        "navigate_page.png"
     ]
 
     # Utilize the earlier defined function to dynamically generate label and image pairs
