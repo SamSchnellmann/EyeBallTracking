@@ -181,39 +181,56 @@ def handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, mode):
 
 
 def handle_back_forth(image, landmarks):
-
-        global last_back_time
         
-        interval = 1.5
+    """
+    Calculates the angle of the top and bottom coordinates of the user's head
+    and utilizes a threshold method for determining whether the user tilted their
+    head or not to move back a page and forward a page on a browser.
+    """
+
+    global last_back_time
     
-        top = landmarks[10]
-        bottom = landmarks[152]
+    interval = 1.5
 
-        direction = ''
+    top = landmarks[10]
+    bottom = landmarks[152]
 
-        current_time = time.time()
+    direction = ''
 
-        t = (top.x * math.ceil(image.shape[1]), top.y * math.ceil(image.shape[0]))
-        b = (bottom.x * math.ceil(image.shape[1]), bottom.y * math.ceil(image.shape[0]))
+    current_time = time.time()
 
-        angle = np.arctan2(t, b)
+    t = (top.x * math.ceil(image.shape[1]), top.y * math.ceil(image.shape[0]))
+    b = (bottom.x * math.ceil(image.shape[1]), bottom.y * math.ceil(image.shape[0]))
 
-        if(angle[0] < 0.7 and (current_time - last_back_time) > interval):
-            direction = 'left'
+    angle = np.arctan2(t, b)
 
-        if(angle[0] > 0.86 and (current_time - last_back_time) > interval):
-            direction = 'right'
-        
-        if(direction):
-            pyautogui.keyDown('alt')
-            pyautogui.press(direction)
-            pyautogui.keyUp('alt')
-            last_back_time = current_time
+    if(angle[0] < 0.7 and (current_time - last_back_time) > interval):
+        direction = 'left'
+
+    if(angle[0] > 0.86 and (current_time - last_back_time) > interval):
+        direction = 'right'
+    
+    if(direction):
+        pyautogui.keyDown('alt')
+        pyautogui.press(direction)
+        pyautogui.keyUp('alt')
+        last_back_time = current_time
 
 
 
 # Function for handling left and right eye blinks to clicks
 def handle_click(landmarks):
+
+    """
+    Function that uses separate arrays for determining whether the user 
+    deliberatly blinks to use the click function vs when they blink normally.
+
+    If the program detects the user is blinking for a given frame, data
+    is appended to either the left or right blink array for the left and right 
+    eyes blinking respectively. Once the user has both eyes open after a blink,
+    the function will click the user's left or right mouse button if the left or 
+    right blink array has more than 3 elements filled with data in them.
+    """
 
     # Declaring globals
     global left_eye_open
