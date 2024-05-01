@@ -64,3 +64,6 @@ diffrent blink patterns as well as double click and scroll up and down.
 
 2. **Running EyeClick**: To run the EyeClick software, click the start button. The start up process will take a short time to run, and once it is complete you will see your camera stream pop up on your screen. Congratulations, you are now using EyeClick! For further instructions on how to use the software, please refer to the `Instructions` page of the EyeClick launcher.
 
+## Exe version
+
+1. If you are using the EXE version of the program, simply double click on the home.exe file that is provided in the distribution and follow the instructions for operating the program as normal.
