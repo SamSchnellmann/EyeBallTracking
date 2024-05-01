@@ -156,16 +156,6 @@ def initialize_app():
 
 # ~~~~~~~~~~~~~~~~~~~ Frame Setup ~~~~~~~~~~~~~~~~~~~ #
 def show_frame(frame_to_show):
-    """
-    Controls the display of different frames within the application by showing the specified frame and hiding others.
-
-    Args:
-    frame_to_show (tk.Frame): The frame that should be made visible.
-
-    This function manages the visibility states of various frames within the application's interface.
-    It hides all frames currently displayed and then shows the specified frame, allowing for dynamic switching
-    of the user interface to different sections like dashboard, instructions, or settings.
-    """
     # Hide all currently displayed frames
     dashboard_frame.pack_forget()
     instruction_frame.pack_forget()
