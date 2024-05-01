@@ -10,16 +10,6 @@ import time
 # Track the last time the mode was toggled
 last_toggle_time = 0
 
-<<<<<<< jacobBranch
-# Variables to monitor the blink state and timing
-last_blink_time = 0
-left_eye_open = True
-right_eye_open = True
-blink_interval = 0
-left_blink_list = []
-right_blink_list = []
-blink_list = []
-=======
 last_blink_time = 0
 
 left_eye_open = True
@@ -38,7 +28,6 @@ right_blink_interval = 0
 
 # Set the scroll sensitivity
 SCROLL_SENSITIVITY = 50
->>>>>>> main
 
 # Track time intervals between blinks
 left_blink_interval = 0
@@ -123,11 +112,7 @@ def initialize():
     """
     mp_face_mesh = mp.solutions.face_mesh
     global face_mesh
-<<<<<<< jacobBranch
-    face_mesh = mp_face_mesh.FaceMesh(refine_landmarks=True, min_detection_confidence=0.5, min_tracking_confidence=0.5)
-=======
     face_mesh = mp_face_mesh.FaceMesh(refine_landmarks = True, min_detection_confidence=0.5, min_tracking_confidence=0.5)
->>>>>>> main
 
     global mp_drawing
     mp_drawing = mp.solutions.drawing_utils
@@ -136,19 +121,7 @@ def initialize():
     drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
     global cap
-<<<<<<< jacobBranch
-    cap = None
-    # Iterate over a range of potential camera indices
-    for index in range(10):  # This range might need adjustment depending on the device
-        cap = cv2.VideoCapture(index)
-        if cap.isOpened():  # Successfully connected to a camera
-            break
-        cap.release()
-    if not cap or not cap.isOpened():  # No working camera was found
-        raise Exception("No available cameras found. Check your device connections.")
-=======
     cap = cv2.VideoCapture(1)
->>>>>>> main
 
 
 def process_image():
@@ -268,176 +241,10 @@ def handle_click(landmarks):
 
 #     pass
 
-<<<<<<< jacobBranch
-def check_if_scroll(y):
-    """
-    Manages a scroll queue to determine if scrolling is needed based on the vertical gaze.
-
-    Args:
-    y (float): The vertical position or movement which may indicate a scrolling action.
-
-    This function updates a queue that tracks recent vertical positions to help decide when to initiate scrolling.
-    It maintains a fixed-length queue to store recent values, removing the oldest when it exceeds the maximum size.
-    """
-    global scroll_queue
-    if len(scroll_queue) < 30:
-        scroll_queue.append(y)
-    else:
-        scroll_queue.pop(0)
-        scroll_queue.append(y)
-
-
-def if_hit_gate(y):
-    """
-    Placeholder function to implement gate detection logic based on a threshold value 'y'.
-
-    Args:
-    y (float): The value that needs to be compared against a threshold to determine if a 'gate' has been hit.
-
-    This function currently does not implement any functionality and needs further development to handle
-    specific conditions or thresholds.
-    """
-    global new_gate, previous_gate
-    # Implementation needed: Update or check 'new_gate' based on 'previous_gate' and 'y'
-
-
-def handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, mode, scroll_direction):
-    """
-    Controls the mouse movement or scroll action based on gaze direction and mode.
-
-    Args:
-    x (float): Horizontal gaze direction, used to determine scroll direction.
-    adjusted_mouse_dx (float): The calculated horizontal movement for the mouse.
-    adjusted_mouse_dy (float): The calculated vertical movement for the mouse.
-    mode (str): Current operation mode ("MOUSE" or "SCROLL"), defining the type of action to perform.
-    scroll_direction (int): Indicates the direction to scroll (positive for up, negative for down).
-
-    Depending on the current mode, this function either moves the mouse cursor by a specified amount or
-    initiates a scroll action in the designated direction.
-    """
-    if mode == "MOUSE":
-        pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-    elif mode == "SCROLL":
-        if x > 0:
-            pyautogui.scroll(SCROLL_SENSITIVITY)
-        elif x < 0:
-            pyautogui.scroll(-SCROLL_SENSITIVITY)
-
-
-def handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, mode, scroll_direction):
-    """
-    Controls the mouse actions based on user gaze direction and operational mode.
-
-    Args:
-    x (float): Horizontal gaze direction value used to determine scroll direction.
-    adjusted_mouse_dx (float): Calculated horizontal movement delta for the mouse.
-    adjusted_mouse_dy (float): Calculated vertical movement delta for the mouse.
-    mode (str): Current operational mode, either "MOUSE" for moving the cursor or "SCROLL" for scrolling.
-    scroll_direction (int): Indicates the scroll direction (not actively used in current implementation).
-
-    Depending on the mode, this function either moves the mouse cursor relative to its current position or
-    scrolls the content if the mode is set to scroll. The scroll amount and direction are determined by
-    the gaze direction and predefined sensitivity settings.
-    """
-    if mode == "MOUSE":
-        pyautogui.moveRel(adjusted_mouse_dx, adjusted_mouse_dy, duration=0.1)
-    elif mode == "SCROLL":
-        if x > 0:
-            pyautogui.scroll(SCROLL_SENSITIVITY)  # Scrolls up
-        elif x < 0:
-            pyautogui.scroll(-SCROLL_SENSITIVITY)  # Scrolls down
-
-
-def handle_click(landmarks):
-    """
-    Processes eye blinks and determines if a mouse click should be triggered based on the blink pattern.
-
-    Args:
-    landmarks (list): List of facial landmarks detected, from which eye positions are extracted.
-
-    This function uses the position of eye landmarks to determine if the eyes are closed. If an eye is detected
-    as closed, it's registered as a blink. Multiple consecutive blinks from one eye can trigger a mouse click
-    (left click for the left eye, right click for the right eye). The function tracks the state of each eye
-    (open or closed) and the timing of blinks to manage click actions efficiently.
-    """
-    global left_eye_open, right_eye_open
-    global left_blink_interval, right_blink_interval
-    global left_blink_list, right_blink_list
-
-    # Extracting landmark positions for both eyes
-    left_eye = [landmarks[159], landmarks[145]]
-    right_eye = [landmarks[386], landmarks[374]]
-
-    # Calculating distances between landmarks to determine if eyes are closed
-    top_lex, top_ley = (1000 * left_eye[0].x), (1000 * left_eye[0].y)
-    bottom_lex, bottom_ley = (1000 * left_eye[1].x), (1000 * left_eye[1].y)
-    top_rex, top_rey = (1000 * right_eye[0].x), (1000 * right_eye[0].y)
-    bottom_rex, bottom_rey = (1000 * right_eye[1].x), (1000 * right_eye[1].y)
-
-    # Check if the left eye is closed
-    if abs(top_ley - bottom_ley) < 6:  # Threshold for closed eye
-        left_blink_list.append("left")
-        if left_eye_open:
-            left_blink_interval = time.time()
-            left_eye_open = False
-    else:
-        left_eye_open = True
-
-    # Check if the right eye is closed
-    if abs(top_rey - bottom_rey) < 6:  # Threshold for closed eye
-        right_blink_list.append("right")
-        if right_eye_open:
-            right_blink_interval = time.time()
-            right_eye_open = False
-    else:
-        right_eye_open = True
-
-    # Trigger left click if multiple consecutive blinks are detected on the left eye
-    if left_blink_list.count('left') > 3:
-        pyautogui.click(button='left')
-        left_blink_interval = time.time()
-        left_blink_list.clear()
-
-    # Reset blink list if the eye is reopened
-    if left_eye_open:
-        left_blink_interval = time.time()
-        left_blink_list.clear()
-
-    # Similar logic applied for the right eye
-    if right_blink_list.count('right') > 3:
-        pyautogui.click(button='right')
-        right_blink_interval = time.time()
-        right_blink_list.clear()
-    if right_eye_open:
-        right_blink_interval = time.time()
-        right_blink_list.clear()
-
-
-def handle_face_direction(x, y, adjusted_mouse_dx, adjusted_mouse_dy):
-    """
-    Determines the gaze direction based on coordinate input and triggers mouse movement or scroll actions.
-
-    Args:
-    x (float): Horizontal position or movement indicating gaze direction horizontally.
-    y (float): Vertical position or movement indicating gaze direction vertically.
-    adjusted_mouse_dx (float): The calculated horizontal movement for the mouse.
-    adjusted_mouse_dy (float): The calculated vertical movement for the mouse.
-
-    Returns:
-    str: A text string indicating the direction the user is looking.
-
-    Depending on the x and y values, this function interprets the user's gaze direction and updates
-    the mouse's position or scrolls the screen accordingly. The function returns a string that indicates
-    the direction the user is looking, which can be used for feedback or debugging.
-    """
-    text = "Forward"  # Default text indicating forward gaze
-
-=======
 def handle_face_direction(x, y, adjusted_mouse_dx, adjusted_mouse_dy):
     text = "Forward"  # Default text
 
     # Determining gaze direction, setting text and calling handle mouse
->>>>>>> main
     if y < -10:
         text = "Looking Left"
         handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode, 0)
@@ -481,19 +288,12 @@ def check_mouth_open(landmarks, threshold=0.01):
 
     current_time = time.time()
     if mouth_open_distance > threshold and (current_time - last_toggle_time) > cooldown_period:
-<<<<<<< jacobBranch
-        toggle_mode()  # Toggle the operation mode
-        last_toggle_time = current_time
-        return True
-
-=======
         # print("Mouth Open")
         toggle_mode()
         last_toggle_time = current_time  # Update the last toggle time
         return True
 
     # print("Mouth Closed")
->>>>>>> main
     return False
 
 
@@ -602,11 +402,8 @@ def draw_landmarks(image, results):
                 y1 = int(land.y * image.shape[0])
                 cv2.circle(image, (x1, y1), 3, (0, 255, 255))
 
-<<<<<<< jacobBranch
-=======
         
 
->>>>>>> main
             # Add the text on the image
             cv2.putText(image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
             cv2.putText(image, "x: " + str(np.round(x, 2)), (500, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
