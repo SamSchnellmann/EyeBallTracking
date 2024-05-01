@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import math
 import pyautogui
 import tkinter as tk
 import threading
@@ -26,16 +27,12 @@ left_blink_list = []
 right_blink_list = []
 blink_list = []
 
-left_blink_interval = 0
-
-right_blink_interval = 0
-
 # Set the scroll sensitivity
 SCROLL_SENSITIVITY = 50
 
 # Track time intervals between blinks
-left_blink_interval = 0
-right_blink_interval = 0
+left_blink_time = 0
+right_blink_time = 0
 
 # Configuration for interaction sensitivity
 SCROLL_SENSITIVITY = 50  # Defines the amount of scroll per scroll event
@@ -61,7 +58,7 @@ def toggle_mode():
     """
     global current_mode
     current_mode = "SCROLL" if current_mode == "MOUSE" else "MOUSE"
-    show_notification_async(f"Switched to {current_mode} mode", duration=3000)
+    show_notification_async(f"Switched to {current_mode} mode", duration=1000)
 
 
 def show_notification(message, duration=3000):
@@ -162,10 +159,6 @@ def check_if_scroll(y):
         scroll_queue.pop(0)
         scroll_queue.append(y)
 
-def if_hit_gate(y):
-    global new_gate
-
-    global previous_gate
 
 def handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, mode):
 
@@ -187,28 +180,33 @@ def handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, mode):
 
 
 
-def handle_back_forth(landmarks):
-        """
-        Looks at the difference between the top and bottom facial landmarks and peforms
-        either the keyboard shortcuts Alt+Left or Alt+Right for tilting the head to the left
-        or to the right respectively.
-        """
+def handle_back_forth(image, landmarks):
+
+        global last_back_time
+        
+        interval = 1.5
+    
         top = landmarks[10]
         bottom = landmarks[152]
 
-        global last_back_time
+        direction = ''
 
         current_time = time.time()
-        if(top.x - bottom.x < -0.1 and (current_time - last_back_time) > 3):
-            pyautogui.keyDown('alt')
-            pyautogui.press('left')
-            pyautogui.keyUp('alt')
-            last_back_time = current_time
 
-        current_time = time.time()
-        if(top.x - bottom.x > 0.1 and (current_time - last_back_time) > 3):
+        t = (top.x * math.ceil(image.shape[1]), top.y * math.ceil(image.shape[0]))
+        b = (bottom.x * math.ceil(image.shape[1]), bottom.y * math.ceil(image.shape[0]))
+
+        angle = np.arctan2(t, b)
+
+        if(angle[0] < 0.7 and (current_time - last_back_time) > interval):
+            direction = 'left'
+
+        if(angle[0] > 0.86 and (current_time - last_back_time) > interval):
+            direction = 'right'
+        
+        if(direction):
             pyautogui.keyDown('alt')
-            pyautogui.press('right')
+            pyautogui.press(direction)
             pyautogui.keyUp('alt')
             last_back_time = current_time
 
@@ -217,23 +215,12 @@ def handle_back_forth(landmarks):
 # Function for handling left and right eye blinks to clicks
 def handle_click(landmarks):
 
-    """
-    Function that uses separate arrays for determining whether the user 
-    deliberatly blinks to use the click function vs when they blink normally.
-
-    If the program detects the user is blinking for a given frame, data
-    is appended to either the left or right blink array for the left and right 
-    eyes blinking respectively. Once the user has both eyes open after a blink,
-    the function will click the user's left or right mouse button if the left or 
-    right blink array has more than 3 elements filled with data in them.
-    """
-
     # Declaring globals
     global left_eye_open
     global right_eye_open
 
-    global left_blink_interval
-    global right_blink_interval
+    global left_blink_time
+    global right_blink_time
 
     global left_blink_list
     global right_blink_list
@@ -250,20 +237,20 @@ def handle_click(landmarks):
     bottom_rex, bottom_rey = (1000 * right_eye[1].x), (1000 * right_eye[1].y)
 
     # If statements that append data to an array for every either eye is closed
-    if(abs(top_ley - bottom_ley) < 6 ):
+    if(abs(top_ley - bottom_ley) < 6 and abs(top_lex - bottom_lex) < 6):
 
         left_blink_list.append("left")
         if(left_eye_open):
-            left_blink_interval = time.time()
+            left_blink_time = time.time()
             left_eye_open = False
     else:
         left_eye_open = True
 
-    if(abs(top_rey - bottom_rey) < 6 ):
+    if(abs(top_rey - bottom_rey) < 6 and abs(top_rex - bottom_rex) < 6):
 
         right_blink_list.append("right")
         if(right_eye_open):
-            right_blink_interval = time.time()
+            right_blink_time = time.time()
             right_eye_open = False
     else:
         right_eye_open = True
@@ -273,18 +260,18 @@ def handle_click(landmarks):
     # Either list has more than 3 items in them
     if(left_blink_list.count('left') > 3):
         pyautogui.click(button = 'left')
-        left_blink_interval = time.time()
+        left_blink_time = time.time()
         left_blink_list.clear()
     elif(left_eye_open == True):
-        left_blink_interval = time.time()
+        left_blink_time = time.time()
         left_blink_list.clear()
 
     if(right_blink_list.count('right') > 3):
         pyautogui.click(button = 'right')
-        right_blink_interval = time.time()
+        right_blink_time = time.time()
         right_blink_list.clear()
     elif(right_eye_open == True):
-        right_blink_interval = time.time()
+        right_blink_time = time.time()
         right_blink_list.clear()
 
 
@@ -299,23 +286,32 @@ def handle_face_direction(x, y, adjusted_mouse_dx, adjusted_mouse_dy):
     they are looking depending on how much in a given direction they are looking.
     """
 
-    text = "Forward"  # Default text
+    threshold = 7
+    
+    look_text = "Looking"
+
+    default_text = "Forward"  
 
     # Determining gaze direction, setting text and calling handle mouse
-    if y < -10:
-        text = "Looking Left"
-        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode)
-    elif y > 10:
-        text = "Looking Right"
-        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode)
-    elif x < 0:
-        text = "Looking Down"
-        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode)
-    elif x > 10:
-        text = "Looking Up"
-        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode)
+    if y < -threshold:
+        look_text += " Left"
+        adjusted_mouse_dx += threshold
+    elif y > threshold:
+        look_text += " Right"
+        adjusted_mouse_dx -= threshold
 
-    return text
+    if x < 0:
+        look_text += " Down"
+        adjusted_mouse_dy *= 1.3
+    elif x > threshold:
+        look_text += " Up"
+        adjusted_mouse_dy += threshold
+
+    if len(look_text) > 7:
+        handle_mouse(x, adjusted_mouse_dx, adjusted_mouse_dy, current_mode)
+        return look_text
+
+    return default_text
 
 
 def check_mouth_open(landmarks, threshold=0.01):
@@ -334,7 +330,7 @@ def check_mouth_open(landmarks, threshold=0.01):
     than the cooldown, the function toggles the current mode and updates the last toggle time.
     """
     global last_toggle_time  # Use the global variable to track the last toggle time
-    cooldown_period = 5  # Cooldown period in seconds to prevent rapid toggling
+    cooldown_period = 1  # Cooldown period in seconds to prevent rapid toggling
 
     # Extract the upper and lower lip positions
     upper_lip = landmarks[13]  # Adjust index as necessary
@@ -447,7 +443,7 @@ def draw_landmarks(image, results):
 
             check_mouth_open(face_landmarks.landmark)
 
-            handle_back_forth(face_landmarks.landmark)
+            handle_back_forth(image, face_landmarks.landmark)
 
             # Display the nose direction
             cv2.projectPoints(nose_3d, rot_vec, trans_vec, cam_matrix, dist_matrix)
@@ -457,10 +453,10 @@ def draw_landmarks(image, results):
 
             cv2.line(image, p1, p2, (255, 255, 0), 3)
 
-            for land in face_landmarks.landmark:
-                x1 = int(land.x * image.shape[1])
-                y1 = int(land.y * image.shape[0])
-                cv2.circle(image, (x1, y1), 3, (0, 255, 255))
+            # for land in face_landmarks.landmark:
+            #     x1 = int(land.x * image.shape[1])
+            #     y1 = int(land.y * image.shape[0])
+            #     cv2.circle(image, (x1, y1), 3, (0, 255, 255))
 
         
 
