@@ -122,7 +122,15 @@ def initialize():
     drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
     global cap
-    cap = cv2.VideoCapture(1)
+    cap = None
+    # Iterate over a range of potential camera indices
+    for index in range(10):  # This range might need adjustment depending on the device
+        cap = cv2.VideoCapture(index)
+        if cap.isOpened():  # Successfully connected to a camera
+            break
+        cap.release()
+    if not cap or not cap.isOpened():  # No working camera was found
+        raise Exception("No available cameras found. Check your device connections.")
 
 
 def process_image():
