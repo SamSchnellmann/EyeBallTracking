@@ -39,12 +39,15 @@ diffrent blink patterns as well as double click and scroll up and down.
 
 ## Installation
 
-1. **Install Python 3.11.7**: Ensure Python 3.11.7 is installed and properly configured on your system. 
+1. **Install Python 3.11.7**: Ensure Python 3.6 or later (3.11.7 recommended) is installed and properly configured on your system. 
 
-2. **Install Dependencies**: Open your terminal or command prompt and navigate to the directory where `home.py` and `requirements.txt` are stored along with this readme file. Then, run the following command:
+    For in depth instructions on how to properly install Python on your system, you may follow this guide by "Python Programmer"
+        https://www.youtube.com/watch?v=YKSpANU8jPE&pp=ygUqaW5zdGFsbCBhbmQgY29uZmlndXJlIHB5dGhvbiBvbiB3aW5kb3dzIDEw
+
+2. **Install Dependencies**: Open your terminal or command prompt and navigate to the directory where `home.py` and `requirements.txt` are stored. Then, run the following command:
 
     
-    pip install -r requirements.txt
+    `pip install -r requirements.txt`
     
 
     This command will install all the required dependencies listed in the `requirements.txt` file.
@@ -53,7 +56,7 @@ diffrent blink patterns as well as double click and scroll up and down.
 
 1. **Run the Script**: With your terminal or command prompt still open to the directory where your Python script (`home.py`) is located, execute the following command to start the Python script:
 
-    python home.py
+    `python home.py`
 
     This command will run the Python script and execute the code within it.
 
