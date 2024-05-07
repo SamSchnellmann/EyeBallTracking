@@ -52,6 +52,13 @@ diffrent blink patterns as well as double click and scroll up and down.
 
     This command will install all the required dependencies listed in the `requirements.txt` file.
 
+3. **Webcam Setup**: Before attempting to run the program, please make sure that the webcam you intend to use for this program is set as your device's default webcam device.
+
+    If you have a camera that is not the one you wish to use set as your default camera, the program will either use that, or it may fail to excecute if the camera is a different device, such as a capture card, that is registered as a webcam.
+
+    For in depth instructions on how to properly configure your webcam for this application, please visit this handy guide.
+        https://gemoo.com/blog/switch-camera-on-windows-10.htm#:~:text=Set%20Camera%20Device%20as%20default,section%20of%20the%20Control%20Panel.
+
 ## Running the Script
 
 1. **Run the Script**: With your terminal or command prompt still open to the directory where your Python script (`home.py`) is located, execute the following command to start the Python script:
